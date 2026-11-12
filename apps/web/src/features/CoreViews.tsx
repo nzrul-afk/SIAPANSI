@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Bell, ClipboardList, Scale, Sprout } from 'lucide-react';
-import { apiRequest } from '../lib/api';
+import { Bell, ClipboardList, Scale, Settings, Sprout } from 'lucide-react';
+import { apiRequest, getApiBase, setCustomApiBase } from '../lib/api';
 import { formatAngka, formatRupiah, formatTanggalIndo } from '../lib/format';
 import { AccessibleLineChart, AIBadge, StatusBadge } from '../components/common/Primitives';
 
@@ -9,12 +9,17 @@ export const LoginView: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const [password, setPassword] = useState('demo1234');
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showServerSetting, setShowServerSetting] = useState(false);
+  const [serverUrl, setServerUrl] = useState(getApiBase());
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setErr('');
     try {
+      if (serverUrl.trim()) {
+        setCustomApiBase(serverUrl.trim());
+      }
       const { data } = await apiRequest('/auth/login', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
@@ -22,7 +27,9 @@ export const LoginView: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       localStorage.setItem('siapansa_token', data.token);
       onLogin();
     } catch (error: any) {
-      setErr(error?.message || 'Gagal masuk.');
+      const msg = error?.message || 'Gagal masuk.';
+      setErr(msg.includes('Failed to fetch') ? 'Gagal terhubung ke backend server API. Periksa URL server di bawah.' : msg);
+      setShowServerSetting(true);
     } finally {
       setLoading(false);
     }
@@ -44,10 +51,40 @@ export const LoginView: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           <label className="block text-xs font-bold text-stone-700 mb-1" htmlFor="pw">Kata Sandi</label>
           <input id="pw" type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full min-h-[48px] px-3 rounded-xl border border-stone-300 text-sm" />
         </div>
-        {err && <p className="text-xs font-semibold text-red-700">{err}</p>}
+        {err && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700 space-y-1">
+            <p className="font-semibold">{err}</p>
+            <p className="text-[11px] text-red-600">URL backend: {getApiBase()}</p>
+          </div>
+        )}
         <button type="submit" disabled={loading} className="w-full min-h-[52px] rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-bold">
           {loading ? 'Masuk...' : 'Masuk'}
         </button>
+
+        <div className="pt-2 text-center">
+          <button
+            type="button"
+            onClick={() => setShowServerSetting(!showServerSetting)}
+            className="text-[11px] text-stone-500 hover:text-brand-700 flex items-center justify-center gap-1 mx-auto"
+          >
+            <Settings className="w-3.5 h-3.5" />
+            {showServerSetting ? 'Tutup Pengaturan Server' : 'Ubah URL Backend API'}
+          </button>
+        </div>
+
+        {showServerSetting && (
+          <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-2 text-xs">
+            <label className="block font-semibold text-stone-700">URL Backend API</label>
+            <input
+              value={serverUrl}
+              onChange={(e) => setServerUrl(e.target.value)}
+              placeholder="https://...trycloudflare.com/api/v1"
+              className="w-full px-2 py-1.5 border border-stone-300 rounded text-xs font-mono"
+            />
+            <p className="text-[10px] text-stone-500">Tersimpan di browser lokal Anda.</p>
+          </div>
+        )}
+
         <p className="text-[11px] text-center text-stone-500">Akun demo sudah terisi. Prototipe memakai data simulasi.</p>
       </form>
     </div>

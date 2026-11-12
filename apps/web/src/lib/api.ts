@@ -8,7 +8,30 @@ import {
   type OfflineStockTx,
 } from '../db/offlineQueue';
 
-const API_BASE = import.meta.env.VITE_API_BASE || '/api/v1';
+const envBase = import.meta.env.VITE_API_BASE;
+export const DEFAULT_API_BASE = 'https://jimmy-morris-viii-affected.trycloudflare.com/api/v1';
+
+export function getApiBase(): string {
+  if (typeof window !== 'undefined') {
+    const custom = localStorage.getItem('siapansa_api_base');
+    if (custom) return custom.replace(/\/+$/, '');
+    if (envBase) return envBase.replace(/\/+$/, '');
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      return DEFAULT_API_BASE;
+    }
+  }
+  return envBase || '/api/v1';
+}
+
+export function setCustomApiBase(url: string): void {
+  if (typeof window !== 'undefined') {
+    if (!url) {
+      localStorage.removeItem('siapansa_api_base');
+    } else {
+      localStorage.setItem('siapansa_api_base', url.trim());
+    }
+  }
+}
 
 // Simulated offline toggle for Demo Mode / Airplane Mode testing
 let simulatedOffline = false;
@@ -60,7 +83,8 @@ export async function apiRequest<T = any>(
   }
 
   try {
-    const res = await fetch(`${API_BASE}${path}`, {
+    const baseUrl = getApiBase();
+    const res = await fetch(`${baseUrl}${path}`, {
       ...options,
       headers: {
         'Content-Type': 'application/json',

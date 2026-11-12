@@ -1,0 +1,51 @@
+{
+  "village": {
+    "id": "v-sidomulyo",
+    "nama": "Desa Sidomulyo",
+    "kecamatan": "Sumbermulyo",
+    "kabupaten": "Kabupaten Contoh, Jawa Timur",
+    "lat": -7.9700,
+    "lon": 112.6000,
+    "luas_lahan_ha": 80.0,
+    "is_own": true,
+    "cluster_id": "gugus-sumbermulyo"
+  },
+  "user": {
+    "id": "u-petugas-1",
+    "village_id": "v-sidomulyo",
+    "email": "petugas@siapansa.demo",
+    "password_plain": "demo1234",
+    "nama": "Petugas Desa Sidomulyo",
+    "role": "petugas"
+  },
+  "population": {
+    "village_id": "v-sidomulyo",
+    "total": 1800,
+    "kk": 520,
+    "balita": 140,
+    "ibu_hamil_menyusui": 45,
+    "lansia": 210,
+    "akg_umum_kkal": 2100,
+    "akg_umum_protein_g": 57,
+    "akg_balita_kkal": 1350,
+    "akg_balita_protein_g": 20,
+    "akg_bumil_kkal": 2500,
+    "akg_bumil_protein_g": 70,
+    "pmt_coverage_30d": 0.78
+  },
+  "warehouses": [
+    {"id": "wh-lumbung", "village_id": "v-sidomulyo", "nama": "Lumbung Pangan Desa", "sumber": "lumbung", "share": 0.35},
+    {"id": "wh-poktan", "village_id": "v-sidomulyo", "nama": "Gudang Kelompok Tani", "sumber": "kelompok_tani", "share": 0.25},
+    {"id": "wh-rt", "village_id": "v-sidomulyo", "nama": "Estimasi Cadangan Rumah Tangga", "sumber": "rumah_tangga", "share": 0.30},
+    {"id": "wh-pedagang", "village_id": "v-sidomulyo", "nama": "Stok Pedagang Desa", "sumber": "pedagang", "share": 0.10}
+  ],
+  "settings": {
+    "ambang": {"aman": 21, "waspada": 14, "siaga": 7, "kritis": 0, "bawah_72_jam": 3},
+    "target_hari": 30,
+    "batas_donor": 21,
+    "bobot_skor": {"ketersediaan": 0.4, "akses": 0.3, "pemanfaatan": 0.3},
+    "ai_enabled": true,
+    "hitung_panen_terjadwal": false,
+    "jam_virtual": "2026-11-12T08:00:00"
+  }
+}

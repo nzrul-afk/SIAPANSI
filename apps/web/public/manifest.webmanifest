@@ -1,0 +1,19 @@
+{
+  "name": "SIAPANSA — Ketahanan Pangan Desa",
+  "short_name": "SIAPANSA",
+  "description": "Tahu seberapa lama pangan desa bertahan, sebelum krisis datang.",
+  "lang": "id",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafaf9",
+  "theme_color": "#166534",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

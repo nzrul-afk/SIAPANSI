@@ -1,3 +1,13 @@
+---
+title: SIAPANSA API
+emoji: 🌾
+colorFrom: green
+colorTo: blue
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # SIAPANSA — Sistem Ketahanan Pangan Desa Berbasis AI
 
 > **Tagline:** “Tahu seberapa lama pangan desa bertahan, sebelum krisis datang.”  

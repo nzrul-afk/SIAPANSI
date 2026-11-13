@@ -62,6 +62,45 @@ if (typeof window !== 'undefined') {
   });
 }
 
+const FALLBACK_OVERVIEW: any = {
+  as_of: '2026-11-12',
+  jam_virtual: '2026-11-12T08:00:00',
+  label_data: 'Data simulasi untuk prototipe',
+  target_hari: 30,
+  kalimat_ringkasan: 'Jika pasokan dari luar berhenti, pangan pokok desa bertahan 32,8 hari. Titik terlemah: Kedelai (14,5 hari).',
+  pool_pokok: { hari_bertahan: 32.8, status: 'Aman', level: 'aman', bawah_72_jam: false, progress_target_pct: 100.0 },
+  pool_protein: { hari_bertahan: 15.3, status: 'Waspada', level: 'waspada', bawah_72_jam: false, progress_target_pct: 51.0 },
+  pool_pelengkap: { hari_bertahan: 20.4, status: 'Waspada', level: 'waspada', bawah_72_jam: false, progress_target_pct: 68.0 },
+  titik_terlemah: { commodity_id: 'c-kedelai', kode: 'kedelai', nama: 'Kedelai', hari_bertahan: 14.5, status: 'Waspada', level: 'waspada', bawah_72_jam: false, progress_target_pct: 48.3 },
+  skor_ketahanan: { skor_total: 77.8, ketersediaan: 66.4, akses: 94.3, pemanfaatan: 76.3, indeks_harga: 8.1, skor_eksposur_global: 3.4 },
+  komoditas: [
+    { id: 'c-beras', kode: 'beras', nama: 'Beras', satuan: 'kg', kelompok: 'pokok', kebutuhan_harian: 450.0, stok_efektif: 17100.0, hari_bertahan: 38.0, status: 'Aman', level: 'aman', bawah_72_jam: false, progress_target_pct: 100.0, harga_sekarang: 14500, perubahan_harga_7d_pct: 0.8 },
+    { id: 'c-jagung', kode: 'jagung', nama: 'Jagung pipil kering', satuan: 'kg', kelompok: 'pokok', kebutuhan_harian: 90.0, stok_efektif: 2520.0, hari_bertahan: 28.0, status: 'Waspada', level: 'waspada', bawah_72_jam: false, progress_target_pct: 93.3, harga_sekarang: 8200, perubahan_harga_7d_pct: 0.0 },
+    { id: 'c-singkong', kode: 'singkong', nama: 'Singkong kering/gaplek', satuan: 'kg', kelompok: 'pokok', kebutuhan_harian: 90.0, stok_efektif: 1800.0, hari_bertahan: 20.0, status: 'Waspada', level: 'waspada', bawah_72_jam: false, progress_target_pct: 66.7, harga_sekarang: 6000, perubahan_harga_7d_pct: 0.0 },
+    { id: 'c-terigu', kode: 'terigu', nama: 'Terigu', satuan: 'kg', kelompok: 'pokok', kebutuhan_harian: 54.0, stok_efektif: 810.0, hari_bertahan: 15.0, status: 'Waspada', level: 'waspada', bawah_72_jam: false, progress_target_pct: 50.0, harga_sekarang: 13000, perubahan_harga_7d_pct: 0.0 },
+    { id: 'c-kedelai', kode: 'kedelai', nama: 'Kedelai', satuan: 'kg', kelompok: 'protein', kebutuhan_harian: 90.0, stok_efektif: 1305.0, hari_bertahan: 14.5, status: 'Waspada', level: 'waspada', bawah_72_jam: false, progress_target_pct: 48.3, harga_sekarang: 12500, perubahan_harga_7d_pct: 0.0 },
+    { id: 'c-telur', kode: 'telur', nama: 'Telur ayam ras', satuan: 'kg', kelompok: 'protein', kebutuhan_harian: 45.0, stok_efektif: 720.0, hari_bertahan: 16.0, status: 'Waspada', level: 'waspada', bawah_72_jam: false, progress_target_pct: 53.3, harga_sekarang: 28000, perubahan_harga_7d_pct: 0.0 },
+    { id: 'c-minyak', kode: 'minyak', nama: 'Minyak goreng curah', satuan: 'liter', kelompok: 'pelengkap', kebutuhan_harian: 36.0, stok_efektif: 1080.0, hari_bertahan: 30.0, status: 'Aman', level: 'aman', bawah_72_jam: false, progress_target_pct: 100.0, harga_sekarang: 16000, perubahan_harga_7d_pct: 0.0 },
+    { id: 'c-gula', kode: 'gula', nama: 'Gula pasir', satuan: 'kg', kelompok: 'pelengkap', kebutuhan_harian: 36.0, stok_efektif: 900.0, hari_bertahan: 25.0, status: 'Waspada', level: 'waspada', bawah_72_jam: false, progress_target_pct: 83.3, harga_sekarang: 17500, perubahan_harga_7d_pct: 0.0 },
+    { id: 'c-bawang', kode: 'bawang_merah', nama: 'Bawang merah', satuan: 'kg', kelompok: 'pelengkap', kebutuhan_harian: 18.0, stok_efektif: 252.0, hari_bertahan: 14.0, status: 'Waspada', level: 'waspada', bawah_72_jam: false, progress_target_pct: 46.7, harga_sekarang: 35000, perubahan_harga_7d_pct: 0.0 },
+    { id: 'c-cabai', kode: 'cabai_rawit', nama: 'Cabai rawit merah', satuan: 'kg', kelompok: 'pelengkap', kebutuhan_harian: 9.0, stok_efektif: 144.0, hari_bertahan: 16.0, status: 'Waspada', level: 'waspada', bawah_72_jam: false, progress_target_pct: 53.3, harga_sekarang: 45000, perubahan_harga_7d_pct: 0.0 },
+  ],
+  peringatan_teratas: [
+    { id: 'alt-R1-c-kedelai', rule_code: 'R1', tingkat: 'Waspada', commodity_nama: 'Kedelai', judul: 'Cadangan Kedelai masuk status Waspada (14.5 hari)', penjelasan: 'Stok efektif Kedelai saat ini cukup untuk 14.5 hari (di bawah batas Aman 21 hari).', status: 'Baru' },
+    { id: 'alt-R1-c-terigu', rule_code: 'R1', tingkat: 'Waspada', commodity_nama: 'Terigu', judul: 'Cadangan Terigu masuk status Waspada (15.0 hari)', penjelasan: 'Stok efektif Terigu saat ini cukup untuk 15.0 hari.', status: 'Baru' },
+  ],
+};
+
+const FALLBACK_STOCK: any = {
+  warehouses: [
+    { id: 'w-lumbung-1', nama: 'Lumbung Pangan Desa', jenis: 'lumbung_desa', kapasitas_kg: 50000, terisi_kg: 24500 },
+    { id: 'w-poktan-1', nama: 'Gudang Kelompok Tani', jenis: 'kelompok_tani', kapasitas_kg: 30000, terisi_kg: 12000 },
+    { id: 'w-rt-est', nama: 'Cadangan Rumah Tangga', jenis: 'rumah_tangga', kapasitas_kg: 20000, terisi_kg: 8500 },
+    { id: 'w-pedagang-1', nama: 'Kios & Pedagang Desa', jenis: 'pedagang', kapasitas_kg: 10000, terisi_kg: 3500 },
+  ],
+  commodities: FALLBACK_OVERVIEW.komoditas,
+};
+
 export async function apiRequest<T = any>(
   path: string,
   options: RequestInit = {},
@@ -112,6 +151,12 @@ export async function apiRequest<T = any>(
       const snap = await loadCacheSnapshot(key);
       if (snap) {
         return { data: snap.data as T, fromCache: true, updatedAt: snap.updated_at };
+      }
+      if (path.includes('/status/overview')) {
+        return { data: FALLBACK_OVERVIEW as T, fromCache: true, updatedAt: new Date().toISOString() };
+      }
+      if (path.includes('/stock') && !path.includes('/transactions')) {
+        return { data: FALLBACK_STOCK as T, fromCache: true, updatedAt: new Date().toISOString() };
       }
     }
     throw err;

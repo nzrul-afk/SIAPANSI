@@ -61,6 +61,17 @@ export const LoginView: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           {loading ? 'Masuk...' : 'Masuk'}
         </button>
 
+        <button
+          type="button"
+          onClick={() => {
+            localStorage.setItem('siapansa_token', 'demo-token-client');
+            onLogin();
+          }}
+          className="w-full min-h-[46px] rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs border border-stone-300 transition-colors"
+        >
+          Masuk Mode Demo Langsung (Offline / Data Lokal)
+        </button>
+
         <div className="pt-2 text-center">
           <button
             type="button"

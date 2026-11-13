@@ -6,6 +6,7 @@ import {
   Bot,
   Check,
   Clock,
+  Copy,
   FileText,
   Globe,
   Printer,
@@ -1852,6 +1853,7 @@ export const ReportView: React.FC = () => {
   const [periode, setPeriode] = useState(30);
   const [report, setReport] = useState<any>(null);
   const [shareInfo, setShareInfo] = useState<any>(null);
+  const [copied, setCopied] = useState(false);
 
   const loadPreview = async (p: number) => {
     const { data } = await apiRequest('/reports/preview', {
@@ -1871,6 +1873,14 @@ export const ReportView: React.FC = () => {
       body: JSON.stringify({ periode }),
     });
     setShareInfo(data);
+  };
+
+  const handleCopyLink = () => {
+    if (!shareInfo) return;
+    const fullUrl = `${window.location.origin}${shareInfo.url_publik}`;
+    navigator.clipboard.writeText(fullUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   const handleSendWA = () => {
@@ -1898,10 +1908,10 @@ export const ReportView: React.FC = () => {
               key={p}
               type="button"
               onClick={() => setPeriode(p)}
-              className={`min-h-[42px] px-3 rounded-xl text-xs font-bold border ${
+              className={`min-h-[42px] px-3 rounded-xl text-xs font-bold border transition ${
                 periode === p
                   ? 'bg-brand-700 text-white border-brand-800'
-                  : 'bg-stone-100 text-stone-700 border-stone-200'
+                  : 'bg-stone-100 text-stone-700 border-stone-200 hover:bg-stone-200'
               }`}
             >
               {p} Hari
@@ -1910,7 +1920,7 @@ export const ReportView: React.FC = () => {
           <button
             type="button"
             onClick={() => window.print()}
-            className="min-h-[42px] px-3.5 rounded-xl bg-stone-900 text-white text-xs font-bold flex items-center gap-1.5"
+            className="min-h-[42px] px-3.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
           >
             <Printer className="w-4 h-4" />
             Cetak / Simpan PDF (A4)
@@ -1918,7 +1928,7 @@ export const ReportView: React.FC = () => {
           <button
             type="button"
             onClick={handleCreateShareLink}
-            className="min-h-[42px] px-3.5 rounded-xl border border-brand-700 text-brand-800 bg-white text-xs font-bold flex items-center gap-1.5"
+            className="min-h-[42px] px-3.5 rounded-xl border border-brand-700 text-brand-800 hover:bg-brand-50 bg-white text-xs font-bold flex items-center gap-1.5 transition"
           >
             <Share2 className="w-4 h-4" />
             Buat Tautan Publik (7 Hari)
@@ -1926,7 +1936,7 @@ export const ReportView: React.FC = () => {
           <button
             type="button"
             onClick={handleSendWA}
-            className="min-h-[42px] px-3.5 rounded-xl bg-emerald-700 text-white text-xs font-bold"
+            className="min-h-[42px] px-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition"
           >
             Kirim ke WhatsApp
           </button>
@@ -1935,17 +1945,27 @@ export const ReportView: React.FC = () => {
 
       {shareInfo && (
         <div className="no-print p-3.5 rounded-xl bg-emerald-50 border border-emerald-300 text-xs flex flex-wrap items-center justify-between gap-2">
-          <div>
+          <div className="space-y-1">
             <p className="font-bold text-emerald-950">Tautan Baca-Saja Publik (Tanpa Login, Berlaku 7 Hari):</p>
-            <a
-              href={shareInfo.url_publik}
-              target="_blank"
-              rel="noreferrer"
-              className="text-brand-800 underline font-mono font-bold"
-            >
-              {window.location.origin}
-              {shareInfo.url_publik}
-            </a>
+            <div className="flex items-center gap-2 flex-wrap">
+              <a
+                href={shareInfo.url_publik}
+                target="_blank"
+                rel="noreferrer"
+                className="text-brand-800 underline font-mono font-bold"
+              >
+                {window.location.origin}
+                {shareInfo.url_publik}
+              </a>
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-[11px] flex items-center gap-1 shadow-sm transition"
+              >
+                {copied ? <Check className="w-3 h-3 text-emerald-200" /> : <Copy className="w-3 h-3" />}
+                {copied ? 'Tersalin!' : 'Salin'}
+              </button>
+            </div>
           </div>
           <span className="text-emerald-800 font-semibold">
             Kedaluwarsa: {formatTanggalIndo(shareInfo.expires_at)}
@@ -2030,26 +2050,44 @@ export const ReportView: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {(report.komoditas || []).map((c: any) => (
-                <tr key={c.id} className="border-b border-stone-200">
-                  <td className="py-1.5 px-2 font-bold">{c.nama}</td>
-                  <td className="py-1.5 px-2 capitalize">{c.kelompok}</td>
-                  <td className="py-1.5 px-2">
-                    {formatAngka(c.stok_efektif, 0)} {c.satuan}
-                  </td>
-                  <td className="py-1.5 px-2">
-                    {formatAngka(c.kebutuhan_harian, 1)} {c.satuan}
-                  </td>
-                  <td className="py-1.5 px-2 font-bold">{formatAngka(c.hari_bertahan, 1)} hari</td>
-                  <td className="py-1.5 px-2">{formatRupiah(c.harga_sekarang)}</td>
-                  <td className="py-1.5 px-2">{c.status}</td>
-                </tr>
-              ))}
+              {(report.komoditas || []).map((c: any) => {
+                const isSafe = c.status === 'Aman';
+                const isWarning = c.status === 'Waspada';
+                return (
+                  <tr key={c.id} className="border-b border-stone-200 hover:bg-stone-50/50">
+                    <td className="py-1.5 px-2 font-bold text-stone-900">{c.nama}</td>
+                    <td className="py-1.5 px-2 capitalize text-stone-600">{c.kelompok}</td>
+                    <td className="py-1.5 px-2">
+                      {formatAngka(c.stok_efektif, 0)} {c.satuan}
+                    </td>
+                    <td className="py-1.5 px-2">
+                      {formatAngka(c.kebutuhan_harian, 1)} {c.satuan}
+                    </td>
+                    <td className="py-1.5 px-2 font-bold text-stone-900">
+                      {formatAngka(c.hari_bertahan, 1)} hari
+                    </td>
+                    <td className="py-1.5 px-2 text-stone-700">{formatRupiah(c.harga_sekarang)}</td>
+                    <td className="py-1.5 px-2">
+                      <span
+                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                          isSafe
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            : isWarning
+                            ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                            : 'bg-red-100 text-red-800 border border-red-300'
+                        }`}
+                      >
+                        {c.status}
+                      </span>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
 
-        {/* Top 3 Risks & Saved Scenarios */}
+        {/* Top 3 Risks & Methodology Notes */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
           <div className="p-3 rounded-xl border border-stone-200 space-y-1">
             <p className="font-bold text-stone-900">Tiga Risiko & Peringatan Utama:</p>
@@ -2065,8 +2103,24 @@ export const ReportView: React.FC = () => {
               • Perhitungan menggunakan standar konservatif FEFO tanpa data pribadi warga.
             </p>
             <p className="text-stone-700">
-              • Nilai gizi dan AKG wajib diverifikasi bersama petugas gizi Puskesmas setempat.
+              • Nilai gizi dan AKG diverifikasi bersama pedoman Puskesmas setempat.
             </p>
+          </div>
+        </div>
+
+        {/* Tanda Tangan Musyawarah Desa */}
+        <div className="pt-6 border-t border-stone-200 grid grid-cols-3 gap-4 text-center text-xs text-stone-800">
+          <div className="space-y-12">
+            <p className="font-semibold text-stone-600">Mengetahui,<br /><span className="font-bold text-stone-900">Kepala Desa Sidomulyo</span></p>
+            <p className="font-bold underline text-stone-900">( H. Bambang Sutrisno )</p>
+          </div>
+          <div className="space-y-12">
+            <p className="font-semibold text-stone-600">Disetujui,<br /><span className="font-bold text-stone-900">Ketua BPD Sidomulyo</span></p>
+            <p className="font-bold underline text-stone-900">( Ir. Supriyadi )</p>
+          </div>
+          <div className="space-y-12">
+            <p className="font-semibold text-stone-600">Penyusun Data,<br /><span className="font-bold text-stone-900">Petugas Lumbung Desa</span></p>
+            <p className="font-bold underline text-stone-900">( Joko Prayitno, S.P. )</p>
           </div>
         </div>
       </div>

@@ -1655,6 +1655,25 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
   // 12. Reports (F12)
   if (cleanPath.startsWith('/reports/preview')) {
     const p = body.periode || 30;
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const pokokDays = stateOverview.pool_pokok?.hari_bertahan ?? 32.8;
+    const protDays = stateOverview.pool_protein?.hari_bertahan ?? 15.3;
+    const weakest = stateOverview.titik_terlemah ?? { nama: 'Kedelai', hari_bertahan: 14.5, status: 'Waspada' };
+    const skor = stateOverview.skor_ketahanan?.skor_total ?? 77.8;
+
+    let narrative = `Berdasarkan inventarisasi stok per ${todayStr}, cadangan pangan pokok Desa Sidomulyo mampu bertahan selama ${pokokDays} hari (Status: ${stateOverview.pool_pokok?.status || 'Aman'}). Cadangan protein mampu bertahan ${protDays} hari. Titik terlemah berada pada komoditas ${weakest.nama} (${weakest.hari_bertahan} hari bertahan, Status: ${weakest.status}), yang memerlukan prioritas penguatan cadangan lumbung atau substitusi pangan lokal.`;
+
+    if (p === 7) {
+      narrative = `Evaluasi Kesiapsiagaan Darurat 7 Hari: Cadangan pangan pokok desa berada pada level ${pokokDays} hari, melampaui ambang batas siaga 7 hari. Titik terlemah ${weakest.nama} (${weakest.hari_bertahan} hari) berada di atas batas kritis 72 jam namun memerlukan pemantauan harian berkala.`;
+    } else if (p === 90) {
+      narrative = `Proyeksi Ketahanan Pangan Triwulan (90 Hari): Mempertimbangkan kalender tanam dan panen desa, cadangan pokok ${pokokDays} hari membutuhkan pasokan panen padi lokal musim mendatang. Alokasi transfer antar-desa Karangsari dan diversifikasi pangan non-terigu disarankan untuk mengamankan 90 hari ke depan.`;
+    }
+
+    const shareSlug = `sidomulyo-${todayStr.replace(/-/g, '')}`;
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://siapansi-nsxa.vercel.app';
+    const fullShareUrl = `${baseUrl}/laporan-publik/${shareSlug}`;
+
     return {
       desa: {
         nama: 'Desa Sidomulyo',
@@ -1663,36 +1682,53 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
         jumlah_penduduk: 1800,
       },
       periode_hari: p,
-      tanggal_cetak: '2026-11-12',
-      ringkasan_naratif:
-        'Cadangan pangan pokok Desa Sidomulyo mampu bertahan selama 32,8 hari. Situasi umum aman terkendali di atas target 30 hari, namun komoditas kedelai (14,5 hari) dan terigu (15,0 hari) berada pada status Waspada dan memerlukan prioritas substitusi lokal.',
+      tanggal_cetak: todayStr,
+      ringkasan_naratif: narrative,
       pool_pokok: stateOverview.pool_pokok,
       pool_protein: stateOverview.pool_protein,
       titik_terlemah: stateOverview.titik_terlemah,
       skor_ketahanan: stateOverview.skor_ketahanan,
       komoditas: stateOverview.komoditas,
       tiga_risiko_utama: stateOverview.peringatan_teratas,
-      teks_whatsapp:
-        '*LAPORAN KETAHANAN PANGAN DESA SIDOMULYO*\nTanggal: 12 Nov 2026\nCadangan Pokok: 32,8 hari (Aman)\nTitik Terlemah: Kedelai (14,5 hari - Waspada)\nSkor Desa: 77.8 / 100\n(Data simulasi prototipe SIAPANSA)',
+      teks_whatsapp: `*LAPORAN KETAHANAN PANGAN DESA SIDOMULYO*\nTanggal: ${todayStr} (Periode ${p} Hari)\n\n• Cadangan Pokok: ${pokokDays} hari (${stateOverview.pool_pokok?.status || 'Aman'})\n• Cadangan Protein: ${protDays} hari (${stateOverview.pool_protein?.status || 'Waspada'})\n• Titik Terlemah: ${weakest.nama} (${weakest.hari_bertahan} hari)\n• Skor Ketahanan Desa: ${skor} / 100\n\nRingkasan:\n${narrative}\n\nBuka laporan resmi A4 publik di sini:\n${fullShareUrl}\n\n(Diterbitkan resmi oleh SIAPANSA — Musyawarah Desa Sidomulyo)`,
     };
   }
 
   if (cleanPath.startsWith('/reports/share')) {
+    const now = new Date();
+    const exp = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const todayStr = now.toISOString().split('T')[0];
+    const shareSlug = `sidomulyo-${todayStr.replace(/-/g, '')}`;
     return {
-      url_publik: '/laporan-publik/sidomulyo-nov2026',
-      expires_at: '2026-11-19T23:59:59',
+      url_publik: `/laporan-publik/${shareSlug}`,
+      expires_at: exp.toISOString(),
     };
   }
 
   if (cleanPath.startsWith('/public/reports/')) {
+    const now = new Date();
+    const todayStr = now.toISOString().split('T')[0];
+    const pokokDays = stateOverview.pool_pokok?.hari_bertahan ?? 32.8;
+    const protDays = stateOverview.pool_protein?.hari_bertahan ?? 15.3;
+    const weakest = stateOverview.titik_terlemah ?? { nama: 'Kedelai', hari_bertahan: 14.5, status: 'Waspada' };
+
     return {
       snapshot: {
-        desa: { nama: 'Desa Sidomulyo, Kab. Malang' },
+        desa: {
+          nama: 'Desa Sidomulyo',
+          kecamatan: 'Sumbermulyo',
+          kabupaten: 'Kabupaten Malang',
+          jumlah_penduduk: 1800,
+        },
         periode_hari: 30,
-        tanggal_cetak: '2026-11-12',
-        ringkasan_naratif:
-          'Laporan Publik Ketahanan Pangan Desa Sidomulyo: Cadangan pangan pokok bertahan 32,8 hari jika pasokan luar berhenti. Situasi terkendali dengan kewaspadaan pada kedelai dan terigu.',
+        tanggal_cetak: todayStr,
+        ringkasan_naratif: `Laporan Publik Ketahanan Pangan Desa Sidomulyo: Cadangan pangan pokok desa bertahan ${pokokDays} hari dan protein bertahan ${protDays} hari jika pasokan dari luar terhenti. Situasi terkendali dengan prioritas pengawasan pada komoditas ${weakest.nama} (${weakest.hari_bertahan} hari).`,
+        pool_pokok: stateOverview.pool_pokok,
+        pool_protein: stateOverview.pool_protein,
+        titik_terlemah: stateOverview.titik_terlemah,
+        skor_ketahanan: stateOverview.skor_ketahanan,
         komoditas: stateOverview.komoditas,
+        tiga_risiko_utama: stateOverview.peringatan_teratas,
       },
     };
   }

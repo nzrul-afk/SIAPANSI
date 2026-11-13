@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Bell, ClipboardList, Scale, Settings, Sprout } from 'lucide-react';
+import { ArrowLeft, Bell, ClipboardList, Printer, Scale, Settings, Sprout } from 'lucide-react';
 import { apiRequest, getApiBase, setCustomApiBase } from '../lib/api';
 import { formatAngka, formatRupiah, formatTanggalIndo } from '../lib/format';
 import { AccessibleLineChart, AIBadge, StatusBadge } from '../components/common/Primitives';
@@ -298,28 +298,175 @@ export const PublicReportView: React.FC<{ token: string }> = ({ token }) => {
       .then(({ data }) => {
         setSnap(data.snapshot);
       })
-      .catch((e) => setErr(e.message));
+      .catch((e) => setErr(e?.message || 'Gagal memuat laporan publik.'));
   }, [token]);
 
-  if (err) return <div className="p-8 text-center font-semibold text-red-800">{err}</div>;
-  if (!snap) return <div className="p-8 text-center">Memuat laporan...</div>;
+  if (err) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-stone-50">
+        <div className="bg-white p-6 rounded-2xl border border-red-200 text-center max-w-md space-y-3 shadow-sm">
+          <p className="font-extrabold text-red-800 text-base">Tautan Tidak Ditemukan atau Sudah Kedaluwarsa</p>
+          <p className="text-xs text-stone-600">{err}</p>
+          <a
+            href="/"
+            className="inline-block px-4 py-2 rounded-xl bg-brand-700 text-white text-xs font-bold"
+          >
+            Buka Beranda SIAPANSA
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (!snap) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-stone-50">
+        <p className="text-sm font-semibold text-stone-600">Memuat laporan resmi desa...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-3xl mx-auto p-4 space-y-3">
-      <div className="rounded-2xl bg-white border border-stone-300 p-5 space-y-3">
-        <span className="inline-block px-2 py-1 rounded bg-amber-100 border border-amber-300 text-xs font-bold">Data simulasi prototipe · baca saja</span>
-        <h1 className="text-xl font-extrabold">{snap.desa?.nama}</h1>
-        <p className="text-xs text-stone-600">Per {formatTanggalIndo(snap.tanggal_cetak)} · periode {snap.periode_hari} hari</p>
-        <div className="flex items-center gap-2"><AIBadge /></div>
-        <p className="text-sm leading-relaxed">{snap.ringkasan_naratif}</p>
-        <table className="w-full text-xs border-collapse">
-          <thead><tr className="border-b border-stone-300 text-left"><th className="py-1">Komoditas</th><th>Hari Bertahan</th><th>Status</th></tr></thead>
-          <tbody>
-            {(snap.komoditas || []).map((c: any) => (
-              <tr key={c.id} className="border-b border-stone-100"><td className="py-1 font-bold">{c.nama}</td><td>{formatAngka(c.hari_bertahan, 1)} hari</td><td>{c.status}</td></tr>
-            ))}
-          </tbody>
-        </table>
+    <div className="min-h-screen bg-stone-100 p-4 sm:p-6 space-y-4">
+      {/* Top Bar Navigation */}
+      <div className="no-print max-w-4xl mx-auto flex flex-wrap items-center justify-between gap-2 bg-white border border-stone-200 p-3 rounded-2xl shadow-sm">
+        <a
+          href="/"
+          className="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold flex items-center gap-1.5 transition"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Masuk ke Aplikasi SIAPANSA
+        </a>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="px-3.5 py-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition"
+        >
+          <Printer className="w-4 h-4" />
+          Cetak / Simpan PDF (A4)
+        </button>
+      </div>
+
+      {/* A4 Sheet Container */}
+      <div className="print-only-a4 max-w-4xl mx-auto bg-white border border-stone-300 rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
+        <div className="border-b-2 border-stone-800 pb-3 flex items-start justify-between gap-4">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-brand-800">
+              LAPORAN RESMI KETAHANAN PANGAN DESA — SIAPANSA
+            </span>
+            <h1 className="text-xl font-extrabold text-stone-900">{snap.desa?.nama}</h1>
+            <p className="text-xs text-stone-600">
+              Periode: {snap.periode_hari} Hari Terakhir · Tanggal: {formatTanggalIndo(snap.tanggal_cetak)} · Penduduk:{' '}
+              {formatAngka(snap.desa?.jumlah_penduduk, 0)} Jiwa
+            </p>
+          </div>
+          <div className="text-right text-xs">
+            <span className="inline-block px-2.5 py-1 rounded bg-emerald-100 border border-emerald-300 text-emerald-900 font-bold">
+              Tautan Publik Resmi
+            </span>
+          </div>
+        </div>
+
+        {/* Narrative Summary */}
+        <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200 text-xs leading-relaxed text-stone-800">
+          <div className="flex items-center justify-between mb-1">
+            <strong className="text-stone-900 font-bold">Ringkasan Eksekutif Ketahanan Pangan:</strong>
+            <AIBadge />
+          </div>
+          <p>{snap.ringkasan_naratif}</p>
+        </div>
+
+        {/* 4 Key Metrics */}
+        {snap.pool_pokok && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+            <div className="p-3 rounded-xl border border-stone-200">
+              <span className="text-stone-500 block">Cadangan Pokok</span>
+              <strong className="text-base text-stone-900">
+                {formatAngka(snap.pool_pokok.hari_bertahan, 1)} hari ({snap.pool_pokok.status})
+              </strong>
+            </div>
+            <div className="p-3 rounded-xl border border-stone-200">
+              <span className="text-stone-500 block">Cadangan Protein</span>
+              <strong className="text-base text-stone-900">
+                {formatAngka(snap.pool_protein?.hari_bertahan, 1)} hari ({snap.pool_protein?.status})
+              </strong>
+            </div>
+            <div className="p-3 rounded-xl border border-stone-200">
+              <span className="text-stone-500 block">Titik Terlemah</span>
+              <strong className="text-base text-amber-800">
+                {snap.titik_terlemah?.nama} ({formatAngka(snap.titik_terlemah?.hari_bertahan, 1)} hr)
+              </strong>
+            </div>
+            <div className="p-3 rounded-xl border border-stone-200">
+              <span className="text-stone-500 block">Skor Ketahanan</span>
+              <strong className="text-base text-brand-800">
+                {formatAngka(snap.skor_ketahanan?.skor_total, 1)} / 100
+              </strong>
+            </div>
+          </div>
+        )}
+
+        {/* Commodity Table */}
+        <div>
+          <h3 className="font-bold text-xs uppercase text-stone-700 mb-2">
+            Status Cadangan 10 Komoditas Pangan Lumbung Desa
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs text-left border-collapse border border-stone-200">
+              <thead>
+                <tr className="bg-stone-100 border-b border-stone-200">
+                  <th className="py-2 px-2.5">Komoditas</th>
+                  <th className="py-2 px-2.5">Kelompok</th>
+                  <th className="py-2 px-2.5">Stok Efektif</th>
+                  <th className="py-2 px-2.5">Kebutuhan/Hari</th>
+                  <th className="py-2 px-2.5">Hari Bertahan</th>
+                  <th className="py-2 px-2.5">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(snap.komoditas || []).map((c: any) => {
+                  const isSafe = c.status === 'Aman';
+                  const isWarning = c.status === 'Waspada';
+                  return (
+                    <tr key={c.id} className="border-b border-stone-200">
+                      <td className="py-2 px-2.5 font-bold text-stone-900">{c.nama}</td>
+                      <td className="py-2 px-2.5 capitalize text-stone-600">{c.kelompok}</td>
+                      <td className="py-2 px-2.5">
+                        {formatAngka(c.stok_efektif, 0)} {c.satuan}
+                      </td>
+                      <td className="py-2 px-2.5">
+                        {formatAngka(c.kebutuhan_harian, 1)} {c.satuan}
+                      </td>
+                      <td className="py-2 px-2.5 font-bold text-stone-900">
+                        {formatAngka(c.hari_bertahan, 1)} hari
+                      </td>
+                      <td className="py-2 px-2.5">
+                        <span
+                          className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold ${
+                            isSafe
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              : isWarning
+                              ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                              : 'bg-red-100 text-red-800 border border-red-300'
+                          }`}
+                        >
+                          {c.status}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Notes & Disclaimer */}
+        <div className="pt-4 border-t border-stone-200 text-[11px] text-stone-500 space-y-1">
+          <p>• Diterbitkan secara resmi oleh SIAPANSA untuk transparansi Musyawarah Desa.</p>
+          <p>• Data dihitung menggunakan prinsip konservatif FEFO tanpa memuat identitas pribadi warga desa.</p>
+          <p className="italic">Dibuat AI, periksa kembali sebelum bertindak.</p>
+        </div>
       </div>
     </div>
   );

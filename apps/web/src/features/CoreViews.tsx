@@ -294,11 +294,9 @@ export const PublicReportView: React.FC<{ token: string }> = ({ token }) => {
   const [err, setErr] = useState('');
 
   useEffect(() => {
-    fetch(`/api/v1/public/reports/${token}`)
-      .then(async (r) => {
-        const j = await r.json();
-        if (!r.ok) throw new Error(j.pesan || 'Tautan tidak valid.');
-        setSnap(j.snapshot);
+    apiRequest(`/public/reports/${token}`)
+      .then(({ data }) => {
+        setSnap(data.snapshot);
       })
       .catch((e) => setErr(e.message));
   }, [token]);

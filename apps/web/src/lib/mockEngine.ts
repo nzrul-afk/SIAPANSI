@@ -62,6 +62,7 @@ const INITIAL_OVERVIEW = {
       satuan: 'kg',
       kelompok: 'pokok',
       kebutuhan_harian: 450.0,
+      norma_per_kapita_hari: 0.250,
       stok_efektif: 17100.0,
       hari_bertahan: 38.0,
       status: 'Aman',
@@ -80,6 +81,7 @@ const INITIAL_OVERVIEW = {
       satuan: 'kg',
       kelompok: 'pokok',
       kebutuhan_harian: 90.0,
+      norma_per_kapita_hari: 0.050,
       stok_efektif: 2520.0,
       hari_bertahan: 28.0,
       status: 'Waspada',
@@ -98,6 +100,7 @@ const INITIAL_OVERVIEW = {
       satuan: 'kg',
       kelompok: 'pokok',
       kebutuhan_harian: 90.0,
+      norma_per_kapita_hari: 0.050,
       stok_efektif: 1800.0,
       hari_bertahan: 20.0,
       status: 'Waspada',
@@ -116,6 +119,7 @@ const INITIAL_OVERVIEW = {
       satuan: 'kg',
       kelompok: 'pokok',
       kebutuhan_harian: 54.0,
+      norma_per_kapita_hari: 0.030,
       stok_efektif: 810.0,
       hari_bertahan: 15.0,
       status: 'Waspada',
@@ -134,6 +138,7 @@ const INITIAL_OVERVIEW = {
       satuan: 'kg',
       kelompok: 'protein',
       kebutuhan_harian: 90.0,
+      norma_per_kapita_hari: 0.050,
       stok_efektif: 1305.0,
       hari_bertahan: 14.5,
       status: 'Waspada',
@@ -152,6 +157,7 @@ const INITIAL_OVERVIEW = {
       satuan: 'kg',
       kelompok: 'protein',
       kebutuhan_harian: 45.0,
+      norma_per_kapita_hari: 0.025,
       stok_efektif: 720.0,
       hari_bertahan: 16.0,
       status: 'Waspada',
@@ -170,6 +176,7 @@ const INITIAL_OVERVIEW = {
       satuan: 'liter',
       kelompok: 'pelengkap',
       kebutuhan_harian: 36.0,
+      norma_per_kapita_hari: 0.020,
       stok_efektif: 1080.0,
       hari_bertahan: 30.0,
       status: 'Aman',
@@ -188,6 +195,7 @@ const INITIAL_OVERVIEW = {
       satuan: 'kg',
       kelompok: 'pelengkap',
       kebutuhan_harian: 36.0,
+      norma_per_kapita_hari: 0.020,
       stok_efektif: 900.0,
       hari_bertahan: 25.0,
       status: 'Waspada',
@@ -206,6 +214,7 @@ const INITIAL_OVERVIEW = {
       satuan: 'kg',
       kelompok: 'pelengkap',
       kebutuhan_harian: 18.0,
+      norma_per_kapita_hari: 0.010,
       stok_efektif: 252.0,
       hari_bertahan: 14.0,
       status: 'Waspada',
@@ -224,6 +233,7 @@ const INITIAL_OVERVIEW = {
       satuan: 'kg',
       kelompok: 'pelengkap',
       kebutuhan_harian: 9.0,
+      norma_per_kapita_hari: 0.005,
       stok_efektif: 144.0,
       hari_bertahan: 16.0,
       status: 'Waspada',
@@ -407,6 +417,23 @@ let stateEvents = [
 ];
 
 let stateSavedScenarios: Array<any> = [];
+
+let statePopulation: any = {
+  total: 1800,
+  kk: 520,
+  balita: 140,
+  ibu_hamil_menyusui: 45,
+  lansia: 210,
+  catatan_akg: 'Standar AKG Kemenkes 2019: 2.100 kkal & 57g protein per orang per hari. Balita dan ibu hamil/menyusui memiliki bobot kebutuhan gizi mikro khusus.',
+};
+
+let stateSettings: any = {
+  target_hari: 30,
+  batas_donor: 21,
+  ambang: { aman: 21, waspada: 14, siaga: 7, kritis: 0, bawah_72_jam: 3 },
+  jam_virtual: '2026-11-12T08:00:00',
+  ai_enabled: true,
+};
 
 const CROP_BASE_SPECS: Record<string, { base_yield_kg_ha: number; konversi: number; days: number; varietas: string[] }> = {
   padi: { base_yield_kg_ha: 5500.0, konversi: 0.60, days: 105, varietas: ['Inpari 32', 'Ciherang', 'IR64'] },
@@ -830,8 +857,51 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
 
   if (cleanPath.startsWith('/demo/event')) {
     const ev = stateEvents.find((e) => e.id === body.event_id);
-    if (ev) ev.aktif = !!body.aktif;
-    return { status: 'sukses', pesan: 'Status peristiwa guncangan berhasil diubah.' };
+    if (ev) {
+      ev.aktif = !!body.aktif;
+      // Peristiwa global berdampak riil pada harga pasar lokal dan sinyal risiko
+      if (ev.id === 'evt-1') {
+        const terigu = stateOverview.komoditas.find((c: any) => c.id === 'c-terigu');
+        if (terigu) {
+          terigu.harga_sekarang = ev.aktif ? 15500 : 13000;
+          terigu.perubahan_harga_7d_pct = ev.aktif ? 19.2 : 0.0;
+        }
+      } else if (ev.id === 'evt-2') {
+        const beras = stateOverview.komoditas.find((c: any) => c.id === 'c-beras');
+        const jagung = stateOverview.komoditas.find((c: any) => c.id === 'c-jagung');
+        if (beras) {
+          beras.harga_sekarang = ev.aktif ? 16200 : 14500;
+          beras.perubahan_harga_7d_pct = ev.aktif ? 11.7 : 0.8;
+        }
+        if (jagung) {
+          jagung.harga_sekarang = ev.aktif ? 9400 : 8200;
+          jagung.perubahan_harga_7d_pct = ev.aktif ? 14.6 : 0.0;
+        }
+      } else if (ev.id === 'evt-3') {
+        const cabai = stateOverview.komoditas.find((c: any) => c.id === 'c-cabai');
+        const bawang = stateOverview.komoditas.find((c: any) => c.id === 'c-bawang');
+        if (cabai) {
+          cabai.harga_sekarang = ev.aktif ? 56000 : 45000;
+          cabai.perubahan_harga_7d_pct = ev.aktif ? 24.4 : 0.0;
+        }
+        if (bawang) {
+          bawang.harga_sekarang = ev.aktif ? 42000 : 35000;
+          bawang.perubahan_harga_7d_pct = ev.aktif ? 20.0 : 0.0;
+        }
+      }
+
+      const activeCount = stateEvents.filter((e) => e.aktif).length;
+      if (stateOverview.skor_ketahanan) {
+        stateOverview.skor_ketahanan.skor_eksposur_global = +(3.4 + activeCount * 2.2).toFixed(1);
+      }
+      recalculateOverviewSummary();
+    }
+    return {
+      status: 'sukses',
+      pesan: body.aktif
+        ? `Peristiwa global "${ev?.nama || 'Krisis'}" aktif! Harga komoditas terdampak melonjak.`
+        : `Peristiwa global "${ev?.nama || 'Krisis'}" dinonaktifkan. Indikator pasar kembali normal.`,
+    };
   }
 
   // 8. Scenario Simulator (F6)
@@ -1736,49 +1806,93 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
   // 13. Population (F4) & Commodities Norma
   if (cleanPath.startsWith('/population')) {
     if (method === 'PUT') {
-      return { status: 'sukses', pesan: 'Data jumlah penduduk berhasil diperbarui.' };
+      statePopulation = { ...statePopulation, ...body };
+      const tot = Number(statePopulation.total) || 1800;
+      stateOverview.komoditas.forEach((c: any) => {
+        if (c.norma_per_kapita_hari) {
+          c.kebutuhan_harian = +(c.norma_per_kapita_hari * tot).toFixed(1);
+        }
+      });
+      recalculateOverviewSummary();
+      return {
+        status: 'sukses',
+        pesan: `Data penduduk berhasil diperbarui (${tot} jiwa). Kebutuhan harian 10 komoditas telah dihitung ulang.`,
+        data: statePopulation,
+      };
     }
-    return { total: 1800, kk: 520, balita: 140, ibu_hamil_menyusui: 45, lansia: 210 };
+    return statePopulation;
   }
 
   if (cleanPath.includes('/norma') && method === 'PUT') {
-    return { status: 'sukses', pesan: 'Norma konsumsi per kapita berhasil diperbarui.' };
+    const parts = cleanPath.split('/');
+    const cid = parts[parts.indexOf('commodities') + 1];
+    const comm = stateOverview.komoditas.find((c: any) => c.id === cid || c.kode === cid);
+    const newNorma = typeof body.norma_per_kapita_hari === 'number' ? body.norma_per_kapita_hari : parseFloat(body.norma_per_kapita_hari);
+    if (comm && newNorma > 0) {
+      comm.norma_per_kapita_hari = newNorma;
+      const tot = Number(statePopulation.total) || 1800;
+      comm.kebutuhan_harian = +(comm.norma_per_kapita_hari * tot).toFixed(1);
+      recalculateOverviewSummary();
+    }
+    return {
+      status: 'sukses',
+      pesan: `Norma konsumsi ${comm?.nama || 'komoditas'} diubah menjadi ${newNorma} ${comm?.satuan || 'kg'}/kapita/hari.`,
+    };
   }
 
   // 14. Settings (F14)
   if (cleanPath.startsWith('/settings')) {
     if (method === 'PUT') {
-      return {
-        target_hari: body.target_hari || 30,
-        batas_donor: body.batas_donor || 21,
-        ambang: { aman: 21, waspada: 14, siaga: 7, kritis: 0, bawah_72_jam: 3 },
-        jam_virtual: '2026-11-12T08:00:00',
-      };
+      stateSettings = { ...stateSettings, ...body };
+      if (typeof body.target_hari === 'number') {
+        stateOverview.target_hari = body.target_hari;
+      }
+      recalculateOverviewSummary();
+      return stateSettings;
     }
-    return {
-      target_hari: 30,
-      batas_donor: 21,
-      ambang: { aman: 21, waspada: 14, siaga: 7, kritis: 0, bawah_72_jam: 3 },
-      jam_virtual: '2026-11-12T08:00:00',
-    };
+    return stateSettings;
   }
 
   // 15. Demo Controls: Advance & Reset (F14)
   if (cleanPath.startsWith('/demo/advance')) {
     const days = body.days || 1;
-    // kurangi stok sedikit untuk mensimulasikan konsumsi harian
+    // Kurangi stok harian
     stateOverview.komoditas.forEach((c: any) => {
-      c.stok_efektif = Math.max(0, c.stok_efektif - c.kebutuhan_harian * days);
+      c.stok_efektif = Math.max(0, Math.round((c.stok_efektif - c.kebutuhan_harian * days) * 10) / 10);
     });
+
+    // Majukan jam virtual
+    const d = new Date(stateSettings.jam_virtual);
+    d.setDate(d.getDate() + days);
+    stateSettings.jam_virtual = d.toISOString();
+    stateOverview.as_of = d.toISOString().split('T')[0];
+    stateOverview.jam_virtual = stateSettings.jam_virtual;
+
     recalculateOverviewSummary();
     return {
       status: 'sukses',
-      pesan: `Waktu virtual berhasil dimajukan ${days} hari. Konsumsi harian warga telah dipotong dari stok.`,
+      pesan: `Waktu virtual berhasil dimajukan ${days} hari (Tanggal sekarang: ${stateOverview.as_of}). Konsumsi harian warga telah dipotong dari stok.`,
     };
   }
 
   if (cleanPath.startsWith('/demo/reset')) {
     stateOverview = JSON.parse(JSON.stringify(INITIAL_OVERVIEW));
+    stateEvents.forEach((e) => (e.aktif = false));
+    statePopulation = {
+      total: 1800,
+      kk: 520,
+      balita: 140,
+      ibu_hamil_menyusui: 45,
+      lansia: 210,
+      catatan_akg: 'Standar AKG Kemenkes 2019: 2.100 kkal & 57g protein per orang per hari. Balita dan ibu hamil/menyusui memiliki bobot kebutuhan gizi mikro khusus.',
+    };
+    stateSettings = {
+      target_hari: 30,
+      batas_donor: 21,
+      ambang: { aman: 21, waspada: 14, siaga: 7, kritis: 0, bawah_72_jam: 3 },
+      jam_virtual: '2026-11-12T08:00:00',
+      ai_enabled: true,
+    };
     stateMyTransfers = [
       {
         id: 'trf-1',
@@ -1815,6 +1929,7 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
         aman_untuk_disetujui: true,
       },
     ];
+    recalculateOverviewSummary();
     return { status: 'sukses', pesan: 'Semua data simulasi berhasil di-reset ke kondisi awal prototipe.' };
   }
 

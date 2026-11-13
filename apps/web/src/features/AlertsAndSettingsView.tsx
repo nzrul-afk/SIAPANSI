@@ -205,8 +205,10 @@ export const SettingsAndDemoView: React.FC<{
     setSettings(sRes.data);
     setEvents(eRes.data.peristiwa || []);
     const map: Record<string, string> = {};
+    const tot = pRes.data?.total || 1800;
     commodities.forEach((c) => {
-      map[c.id] = String(c.norma_per_kapita_hari);
+      const n = c.norma_per_kapita_hari != null ? c.norma_per_kapita_hari : +(c.kebutuhan_harian / tot).toFixed(3);
+      map[c.id] = String(n);
     });
     setNormaEdits(map);
   };
@@ -494,7 +496,7 @@ export const SettingsAndDemoView: React.FC<{
                       type="number"
                       step="0.001"
                       min="0.001"
-                      value={normaEdits[c.id] ?? c.norma_per_kapita_hari}
+                      value={normaEdits[c.id] ?? (c.norma_per_kapita_hari != null ? String(c.norma_per_kapita_hari) : String(+(c.kebutuhan_harian / (pop?.total || 1800)).toFixed(3)))}
                       onChange={(e) => setNormaEdits({ ...normaEdits, [c.id]: e.target.value })}
                       className="w-24 min-h-[38px] px-2 rounded-lg border border-stone-300 font-bold text-right"
                     />

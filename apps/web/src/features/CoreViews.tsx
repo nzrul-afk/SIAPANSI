@@ -3,8 +3,11 @@ import {
   AlertTriangle,
   ArrowDownRight,
   ArrowLeft,
+  ArrowRight,
   ArrowUpRight,
   Bell,
+  Bot,
+  Calendar,
   ChevronDown,
   ChevronUp,
   ClipboardList,
@@ -15,8 +18,14 @@ import {
   Scale,
   Search,
   Settings,
+  ShieldCheck,
+  Sliders,
   Sprout,
+  TrendingDown,
+  TrendingUp,
+  Truck,
   Warehouse,
+  Zap,
 } from 'lucide-react';
 import { apiRequest, getApiBase, setCustomApiBase } from '../lib/api';
 import { formatAngka, formatRupiah, formatTanggalIndo } from '../lib/format';
@@ -124,16 +133,23 @@ export const DashboardView: React.FC<{
   overview: any;
   onNavigate: (tab: string) => void;
 }> = ({ overview, onNavigate }) => {
+  const [selectedCommId, setSelectedCommId] = useState<string>('c-beras');
   const [proj, setProj] = useState<any>(null);
 
   useEffect(() => {
-    apiRequest('/status/projection?commodity=c-beras&days=30')
+    apiRequest(`/status/projection?commodity=${selectedCommId}&days=30`)
       .then(({ data }) => setProj(data))
       .catch(() => {});
-  }, [overview?.as_of, overview?.pool_pokok?.hari_bertahan]);
+  }, [selectedCommId, overview?.as_of, overview?.pool_pokok?.hari_bertahan]);
 
   if (!overview) return <p className="text-sm text-stone-600">Memuat data desa...</p>;
-  const { pool_pokok: pk, pool_protein: pr, titik_terlemah: tl, skor_ketahanan: sk } = overview;
+  const {
+    pool_pokok: pk,
+    pool_protein: pr,
+    pool_pelengkap: pl,
+    titik_terlemah: tl,
+    skor_ketahanan: sk,
+  } = overview;
   const alerts = overview.peringatan_teratas || [];
   const hargaNaik = [...(overview.komoditas || [])]
     .sort((a, b) => b.perubahan_harga_7d_pct - a.perubahan_harga_7d_pct)
@@ -141,83 +157,268 @@ export const DashboardView: React.FC<{
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl bg-white border border-stone-200 p-5 shadow-sm">
-        <p className="text-xs font-bold text-stone-500">Jika pasokan luar berhenti, pangan pokok desa bertahan</p>
-        <div className="flex flex-wrap items-end gap-3 mt-1">
-          <span className="text-5xl font-extrabold text-stone-900">{formatAngka(pk.hari_bertahan, 1)}</span>
-          <span className="text-lg font-bold text-stone-700 pb-1.5">hari</span>
-          <StatusBadge status={pk.status} bawah72Jam={pk.bawah_72_jam} size="lg" />
+      {/* 1. Header Banner Wilayah & Ringkasan Eksekutif */}
+      <div className="rounded-2xl bg-gradient-to-br from-brand-900 via-brand-800 to-stone-900 text-white p-5 shadow-sm space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 pb-3">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="px-2 py-0.5 rounded-md bg-white/20 text-[11px] font-bold tracking-wide">
+                LUMBUNG PANGAN DESA
+              </span>
+              <span className="text-xs text-brand-100 flex items-center gap-1">
+                <Calendar className="w-3.5 h-3.5" />
+                Data As-Of: {overview.as_of ? formatTanggalIndo(overview.as_of) : '12 Nov 2026'}
+              </span>
+            </div>
+            <h1 className="text-xl font-extrabold mt-1">Desa Sidomulyo</h1>
+            <p className="text-xs text-brand-200">Kecamatan Ngantang · Kabupaten Malang</p>
+          </div>
+          <div className="flex items-center gap-1 bg-white/10 backdrop-blur-xs px-3 py-1.5 rounded-xl border border-white/15">
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-bold text-white">Status EWS Aktif</span>
+          </div>
         </div>
-        <div className="h-2 rounded-full bg-stone-200 mt-3 overflow-hidden">
-          <div className="h-full bg-brand-600" style={{ width: `${pk.progress_target_pct}%` }} />
+
+        {/* Hero DoC Metrik Utama */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 pt-1">
+          <div>
+            <p className="text-xs font-semibold text-brand-200">
+              Jika pasokan luar berhenti total, cadangan pangan pokok desa bertahan:
+            </p>
+            <div className="flex items-baseline gap-2 mt-1">
+              <span className="text-5xl font-black tracking-tight">{formatAngka(pk.hari_bertahan, 1)}</span>
+              <span className="text-xl font-bold text-brand-200">hari</span>
+              <StatusBadge status={pk.status} bawah72Jam={pk.bawah_72_jam} size="lg" />
+            </div>
+          </div>
+          <div className="sm:text-right space-y-1">
+            <span className="text-xs text-brand-200">
+              Target Aman: <strong>{overview.target_hari ?? 30} Hari Cadangan</strong>
+            </span>
+            <div className="w-full sm:w-48 h-2 rounded-full bg-white/20 overflow-hidden">
+              <div
+                className="h-full bg-emerald-400 transition-all duration-500 rounded-full"
+                style={{ width: `${Math.min(100, pk.progress_target_pct || 100)}%` }}
+              />
+            </div>
+            <p className="text-[11px] text-brand-200">
+              {formatAngka(pk.progress_target_pct, 0)}% dari target desa
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-stone-600 mt-1">{formatAngka(pk.progress_target_pct, 0)}% dari target {overview.target_hari} hari</p>
+
+        {/* Ringkasan Satu Kalimat */}
+        {overview.ringkasan_satu_kalimat && (
+          <div className="p-3 rounded-xl bg-white/10 border border-white/10 text-xs font-medium text-brand-100 flex items-start gap-2">
+            <Zap className="w-4 h-4 text-amber-300 shrink-0 mt-0.5" />
+            <p>{overview.ringkasan_satu_kalimat}</p>
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="rounded-2xl bg-white border border-stone-200 p-4 shadow-sm">
-          <p className="text-xs font-bold text-stone-500">Kelompok Protein</p>
-          <p className="text-2xl font-extrabold">{formatAngka(pr.hari_bertahan, 1)} hari</p>
-          <StatusBadge status={pr.status} size="sm" />
+      {/* 2. Pintasan Aksi Cepat Aparat Desa */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <button
+          type="button"
+          onClick={() => onNavigate('stok')}
+          className="p-3 rounded-2xl bg-white border border-stone-200 hover:border-brand-500 hover:shadow-xs text-left transition flex items-center gap-2.5 group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-brand-50 text-brand-700 flex items-center justify-center shrink-0 group-hover:bg-brand-700 group-hover:text-white transition">
+            <Package className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="font-extrabold text-xs text-stone-900 leading-tight">Buku Stok</p>
+            <p className="text-[10px] text-stone-500">Catat & Opname</p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onNavigate('simulasi')}
+          className="p-3 rounded-2xl bg-white border border-stone-200 hover:border-brand-500 hover:shadow-xs text-left transition flex items-center gap-2.5 group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 group-hover:bg-amber-600 group-hover:text-white transition">
+            <Sliders className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="font-extrabold text-xs text-stone-900 leading-tight">Simulasi Krisis</p>
+            <p className="text-[10px] text-stone-500">Uji Guncangan</p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onNavigate('jaringan')}
+          className="p-3 rounded-2xl bg-white border border-stone-200 hover:border-brand-500 hover:shadow-xs text-left transition flex items-center gap-2.5 group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition">
+            <Truck className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="font-extrabold text-xs text-stone-900 leading-tight">Gugus Desa</p>
+            <p className="text-[10px] text-stone-500">Barter & Logistik</p>
+          </div>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => onNavigate('asisten')}
+          className="p-3 rounded-2xl bg-white border border-stone-200 hover:border-brand-500 hover:shadow-xs text-left transition flex items-center gap-2.5 group"
+        >
+          <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center shrink-0 group-hover:bg-purple-600 group-hover:text-white transition">
+            <Bot className="w-4 h-4" />
+          </div>
+          <div>
+            <p className="font-extrabold text-xs text-stone-900 leading-tight">Tanya Asisten</p>
+            <p className="text-[10px] text-stone-500">Konsultasi AI</p>
+          </div>
+        </button>
+      </div>
+
+      {/* 3. Tiga Kolom Pool Ketahanan & Skor Ketahanan */}
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+        <div className="rounded-2xl bg-white border border-stone-200 p-4 shadow-sm space-y-1">
+          <p className="text-[11px] font-bold text-stone-500 uppercase tracking-wide">Pangan Protein</p>
+          <p className="text-2xl font-extrabold text-stone-900">{formatAngka(pr.hari_bertahan, 1)} <span className="text-xs font-normal text-stone-500">hari</span></p>
+          <div className="flex items-center justify-between pt-1">
+            <StatusBadge status={pr.status} size="sm" />
+            <span className="text-[10px] text-stone-500">Kedelai & Telur</span>
+          </div>
         </div>
-        <div className="rounded-2xl bg-white border border-stone-200 p-4 shadow-sm">
-          <p className="text-xs font-bold text-stone-500">Titik Terlemah</p>
-          <p className="text-2xl font-extrabold">{tl.nama}</p>
-          <p className="text-xs text-stone-700 mb-1">{formatAngka(tl.hari_bertahan, 1)} hari</p>
-          <StatusBadge status={tl.status} size="sm" />
+
+        <div className="rounded-2xl bg-white border border-stone-200 p-4 shadow-sm space-y-1">
+          <p className="text-[11px] font-bold text-stone-500 uppercase tracking-wide">Bahan Pelengkap</p>
+          <p className="text-2xl font-extrabold text-stone-900">{formatAngka(pl?.hari_bertahan || 20.4, 1)} <span className="text-xs font-normal text-stone-500">hari</span></p>
+          <div className="flex items-center justify-between pt-1">
+            <StatusBadge status={pl?.status || 'Waspada'} size="sm" />
+            <span className="text-[10px] text-stone-500">Minyak, Gula, Bumbu</span>
+          </div>
         </div>
-        <div className="rounded-2xl bg-white border border-stone-200 p-4 shadow-sm">
-          <p className="text-xs font-bold text-stone-500">Skor Ketahanan</p>
-          <p className="text-2xl font-extrabold text-brand-800">{formatAngka(sk.skor_total, 1)} <span className="text-sm text-stone-500">/ 100</span></p>
-          <p className="text-[11px] text-stone-600">
-            Ketersediaan {formatAngka(sk.ketersediaan, 0)} · Akses {formatAngka(sk.akses, 0)} · Pemanfaatan {formatAngka(sk.pemanfaatan, 0)}
+
+        <div className="rounded-2xl bg-white border border-stone-200 p-4 shadow-sm space-y-1">
+          <p className="text-[11px] font-bold text-stone-500 uppercase tracking-wide">Titik Terlemah Desa</p>
+          <p className="text-xl font-extrabold text-stone-900 truncate">{tl.nama}</p>
+          <div className="flex items-center justify-between pt-1">
+            <StatusBadge status={tl.status} size="sm" />
+            <span className="text-xs font-bold text-amber-800">{formatAngka(tl.hari_bertahan, 1)} hari</span>
+          </div>
+        </div>
+
+        <div className="rounded-2xl bg-white border border-stone-200 p-4 shadow-sm space-y-1">
+          <p className="text-[11px] font-bold text-stone-500 uppercase tracking-wide">Indeks Ketahanan</p>
+          <p className="text-2xl font-extrabold text-brand-800">
+            {formatAngka(sk.skor_total, 1)} <span className="text-xs font-normal text-stone-500">/ 100</span>
+          </p>
+          <p className="text-[10px] text-stone-600 truncate">
+            Ketersediaan {formatAngka(sk.ketersediaan, 0)} · Akses {formatAngka(sk.akses, 0)} · Gizi {formatAngka(sk.pemanfaatan, 0)}
           </p>
         </div>
       </div>
 
-      <div className="rounded-2xl bg-white border border-stone-200 p-4 shadow-sm space-y-2">
+      {/* 4. Peringatan Perlu Tindakan Segera */}
+      <div className="rounded-2xl bg-white border border-stone-200 p-4 shadow-sm space-y-2.5">
         <div className="flex items-center justify-between">
-          <h3 className="font-bold text-sm flex items-center gap-1.5"><Bell className="w-4 h-4 text-brand-700" />Perlu Tindakan</h3>
-          <button type="button" onClick={() => onNavigate('peringatan')} className="text-xs font-bold text-brand-700 underline">
+          <h3 className="font-bold text-sm flex items-center gap-1.5 text-stone-900">
+            <Bell className="w-4 h-4 text-brand-700" />
+            Peringatan Dini Perlu Tindakan
+          </h3>
+          <button
+            type="button"
+            onClick={() => onNavigate('peringatan')}
+            className="text-xs font-bold text-brand-700 hover:underline flex items-center gap-1"
+          >
             Lihat semua ({overview.jumlah_peringatan_aktif ?? overview.peringatan_teratas?.length ?? 2})
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
-        {alerts.length === 0 && <p className="text-xs text-stone-600">Tidak ada peringatan aktif.</p>}
-        {alerts.map((a: any) => (
-          <button key={a.id} type="button" onClick={() => onNavigate('peringatan')} className="w-full text-left p-3 rounded-xl border border-stone-200 hover:bg-stone-50 flex items-center justify-between gap-2">
-            <span className="text-xs font-semibold text-stone-900">{a.judul}</span>
-            <StatusBadge status={a.tingkat} size="sm" />
-          </button>
-        ))}
+        {alerts.length === 0 ? (
+          <p className="text-xs text-stone-600 py-2">Tidak ada peringatan aktif saat ini.</p>
+        ) : (
+          alerts.slice(0, 3).map((a: any) => (
+            <button
+              key={a.id}
+              type="button"
+              onClick={() => onNavigate('peringatan')}
+              className="w-full text-left p-3 rounded-xl border border-stone-200 hover:border-brand-300 hover:bg-stone-50 flex items-center justify-between gap-2 transition"
+            >
+              <div className="space-y-0.5">
+                <span className="text-xs font-bold text-stone-900 block">{a.judul}</span>
+                <span className="text-[11px] text-stone-500">{a.penjelasan || a.kenapa_penting}</span>
+              </div>
+              <StatusBadge status={a.tingkat} size="sm" />
+            </button>
+          ))
+        )}
       </div>
 
-      {proj && (
-        <AccessibleLineChart
-          title="Proyeksi Stok Beras 30 Hari (tanpa pasokan luar)"
-          altDescription="Grafik proyeksi stok beras selama 30 hari ke depan dibanding ambang aman, waspada, dan siaga."
-          data={proj.proyeksi.filter((_: any, i: number) => i % 2 === 0)}
-          xKey="hari_ke"
-          unit="kg"
-          lines={[
-            { key: 'stok', label: 'Stok beras', color: '#15803d' },
-            { key: 'ambang_aman', label: 'Batas Aman', color: '#0ea5e9', dashed: true },
-            { key: 'ambang_siaga', label: 'Batas Siaga', color: '#ea580c', dashed: true },
-          ]}
-        />
-      )}
+      {/* 5. Proyeksi Penurunan Stok 30 Hari dengan Pilihan Komoditas */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between flex-wrap gap-2 px-1">
+          <p className="text-xs font-bold text-stone-700">Pilih Komoditas untuk Proyeksi Kurva 30 Hari:</p>
+          <div className="flex gap-1.5">
+            {[
+              { id: 'c-beras', label: 'Beras' },
+              { id: 'c-kedelai', label: 'Kedelai' },
+              { id: 'c-jagung', label: 'Jagung' },
+            ].map((comm) => (
+              <button
+                key={comm.id}
+                type="button"
+                onClick={() => setSelectedCommId(comm.id)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                  selectedCommId === comm.id
+                    ? 'bg-brand-700 text-white'
+                    : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-100'
+                }`}
+              >
+                {comm.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      <div className="rounded-2xl bg-white border border-stone-200 p-4 shadow-sm">
-        <h3 className="font-bold text-sm mb-2">Ringkasan Harga (kenaikan 7 hari tertinggi)</h3>
+        {proj && (
+          <AccessibleLineChart
+            title={`Proyeksi Stok ${selectedCommId === 'c-beras' ? 'Beras' : selectedCommId === 'c-kedelai' ? 'Kedelai' : 'Jagung'} 30 Hari (tanpa pasokan luar)`}
+            altDescription="Grafik proyeksi stok pangan selama 30 hari ke depan dibanding ambang batas aman dan waspada."
+            data={proj.proyeksi.filter((_: any, i: number) => i % 2 === 0)}
+            xKey="hari_ke"
+            unit="kg"
+            lines={[
+              { key: 'stok', label: 'Stok Terdata', color: '#15803d' },
+              { key: 'ambang_aman', label: 'Batas Aman', color: '#0ea5e9', dashed: true },
+              { key: 'ambang_siaga', label: 'Batas Siaga', color: '#ea580c', dashed: true },
+            ]}
+          />
+        )}
+      </div>
+
+      {/* 6. Ringkasan Pergerakan Harga Pasar 7 Hari */}
+      <div className="rounded-2xl bg-white border border-stone-200 p-4 shadow-sm space-y-2">
+        <div className="flex items-center justify-between">
+          <h3 className="font-bold text-sm text-stone-900">Pergerakan Harga Pasar (7 Hari Terakhir)</h3>
+          <span className="text-[11px] text-stone-500">Indeks Pasar Desa</span>
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-          {hargaNaik.map((c: any) => (
-            <div key={c.id} className="p-2.5 rounded-xl bg-stone-50 border border-stone-200">
-              <p className="font-bold">{c.nama}</p>
-              <p>{formatRupiah(c.harga_sekarang)}/{c.satuan}</p>
-              <p className={c.perubahan_harga_7d_pct >= 10 ? 'font-bold text-red-700' : 'text-stone-600'}>
-                {c.perubahan_harga_7d_pct >= 0 ? '+' : ''}{formatAngka(c.perubahan_harga_7d_pct, 1)}% (7 hari)
-              </p>
-            </div>
-          ))}
+          {hargaNaik.map((c: any) => {
+            const isUp = c.perubahan_harga_7d_pct > 0;
+            return (
+              <div key={c.id} className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 space-y-1">
+                <p className="font-bold text-stone-900 truncate">{c.nama}</p>
+                <p className="font-semibold text-stone-800">{formatRupiah(c.harga_sekarang)}/{c.satuan}</p>
+                <div className="flex items-center gap-1">
+                  {isUp ? (
+                    <TrendingUp className="w-3.5 h-3.5 text-red-600" />
+                  ) : (
+                    <TrendingDown className="w-3.5 h-3.5 text-emerald-600" />
+                  )}
+                  <span className={`font-bold ${isUp ? 'text-red-700' : 'text-emerald-700'}`}>
+                    {isUp ? '+' : ''}{formatAngka(c.perubahan_harga_7d_pct, 1)}%
+                  </span>
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

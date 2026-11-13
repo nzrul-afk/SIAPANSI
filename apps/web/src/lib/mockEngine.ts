@@ -661,15 +661,35 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
 
   // 5. Alerts
   if (cleanPath.startsWith('/alerts')) {
-    if (method === 'PATCH') {
+    const alertIdMatch = cleanPath.match(/^\/alerts\/(.+)$/);
+    if (method === 'PATCH' && alertIdMatch) {
+      const targetId = alertIdMatch[1];
+      const alertItem = stateOverview.peringatan_teratas.find((a: any) => a.id === targetId);
+      if (alertItem) {
+        if (body.status) alertItem.status = body.status;
+        if (body.tunda_24_jam) alertItem.status = 'Ditunda (24 Jam)';
+      }
+      stateOverview.jumlah_peringatan_aktif = stateOverview.peringatan_teratas.filter((a: any) => a.status !== 'Selesai').length;
       return { status: 'sukses', pesan: 'Status peringatan diperbarui.' };
     }
+
+    const tingkatFilter = urlObj.searchParams.get('tingkat');
+    let filteredAlerts = stateOverview.peringatan_teratas;
+    if (tingkatFilter && tingkatFilter !== 'semua') {
+      filteredAlerts = filteredAlerts.filter((a: any) => a.tingkat.toLowerCase() === tingkatFilter.toLowerCase());
+    }
+
+    const aktifCount = stateOverview.peringatan_teratas.filter((a: any) => a.status !== 'Selesai').length;
+    const waspadaCount = stateOverview.peringatan_teratas.filter((a: any) => a.tingkat === 'Waspada' && a.status !== 'Selesai').length;
+    const siagaCount = stateOverview.peringatan_teratas.filter((a: any) => a.tingkat === 'Siaga' && a.status !== 'Selesai').length;
+    const kritisCount = stateOverview.peringatan_teratas.filter((a: any) => a.tingkat === 'Kritis' && a.status !== 'Selesai').length;
+
     return {
-      peringatan: stateOverview.peringatan_teratas,
-      jumlah_aktif: 3,
-      jumlah_waspada: 3,
-      jumlah_siaga: 0,
-      jumlah_kritis: 0,
+      peringatan: filteredAlerts,
+      jumlah_aktif: aktifCount,
+      jumlah_waspada: waspadaCount,
+      jumlah_siaga: siagaCount,
+      jumlah_kritis: kritisCount,
     };
   }
 

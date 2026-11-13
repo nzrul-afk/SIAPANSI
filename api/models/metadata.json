@@ -1,0 +1,9 @@
+{
+  "model_name": "GradientBoostingRegressor (Median + Quantile P10/P90)",
+  "trained_at": "2026-11-12T08:00:00+07:00",
+  "data_version": "simulasi-v1.0 (3.000 baris sintetis)",
+  "n_samples": 3000,
+  "mae_kg_ha": 322.7,
+  "mape_pct": 7.19,
+  "label_ui": "Model dilatih dari data simulasi"
+}

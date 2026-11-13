@@ -89,9 +89,19 @@ export async function apiRequest<T = any>(
         ...(options.headers || {}),
       },
     });
-    const json = await res.json();
+    const rawText = await res.text();
+    let json: any = null;
+    try {
+      json = JSON.parse(rawText);
+    } catch {
+      // Non-JSON response (e.g. server error HTML or plain text)
+    }
     if (!res.ok) {
-      throw new Error(json?.pesan || json?.detail || `Galat jaringan (${res.status})`);
+      const errMsg = json?.pesan || json?.detail || (rawText && rawText.length < 150 ? rawText : `Galat server (${res.status})`);
+      throw new Error(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
+    }
+    if (!json) {
+      throw new Error('Respon server bukan format JSON valid.');
     }
     if (method === 'GET') {
       await saveCacheSnapshot(key, json);

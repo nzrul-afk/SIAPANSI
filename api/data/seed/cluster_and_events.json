@@ -1,0 +1,371 @@
+{
+  "harvest_plans": [
+    {
+      "id": "hp-padi-1",
+      "village_id": "v-sidomulyo",
+      "commodity_id": "c-beras",
+      "komoditas_tanam": "padi",
+      "luas_ha": 12.0,
+      "hari_tanam_lalu": 45,
+      "varietas": "Inpari 32",
+      "kondisi_pupuk": "cukup",
+      "sumber_air": "irigasi_teknis",
+      "konversi": 0.6,
+      "produktivitas_dummy_kg_ha": 5500.0,
+      "lama_tumbuh_hari": 105,
+      "aktif_di_proyeksi": false
+    },
+    {
+      "id": "hp-jagung-1",
+      "village_id": "v-sidomulyo",
+      "commodity_id": "c-jagung",
+      "komoditas_tanam": "jagung",
+      "luas_ha": 2.0,
+      "hari_tanam_lalu": 30,
+      "varietas": "Bisi 18",
+      "kondisi_pupuk": "cukup",
+      "sumber_air": "tadah_hujan",
+      "konversi": 1.0,
+      "produktivitas_dummy_kg_ha": 5000.0,
+      "lama_tumbuh_hari": 95,
+      "aktif_di_proyeksi": false
+    },
+    {
+      "id": "hp-singkong-1",
+      "village_id": "v-sidomulyo",
+      "commodity_id": "c-singkong",
+      "komoditas_tanam": "singkong",
+      "luas_ha": 1.0,
+      "hari_tanam_lalu": 150,
+      "varietas": "Kasesa",
+      "kondisi_pupuk": "cukup",
+      "sumber_air": "tadah_hujan",
+      "konversi": 0.33,
+      "produktivitas_dummy_kg_ha": 20000.0,
+      "lama_tumbuh_hari": 210,
+      "aktif_di_proyeksi": false
+    },
+    {
+      "id": "hp-cabai-1",
+      "village_id": "v-sidomulyo",
+      "commodity_id": "c-cabai",
+      "komoditas_tanam": "cabai_rawit",
+      "luas_ha": 1.0,
+      "hari_tanam_lalu": 40,
+      "varietas": "Dewata 43",
+      "kondisi_pupuk": "kurang",
+      "sumber_air": "irigasi_teknis",
+      "konversi": 1.0,
+      "produktivitas_dummy_kg_ha": 8000.0,
+      "lama_tumbuh_hari": 85,
+      "aktif_di_proyeksi": false
+    },
+    {
+      "id": "hp-bawang-1",
+      "village_id": "v-sidomulyo",
+      "commodity_id": "c-bawang",
+      "komoditas_tanam": "bawang_merah",
+      "luas_ha": 1.5,
+      "hari_tanam_lalu": 25,
+      "varietas": "Bima Brebes",
+      "kondisi_pupuk": "cukup",
+      "sumber_air": "irigasi_teknis",
+      "konversi": 1.0,
+      "produktivitas_dummy_kg_ha": 10000.0,
+      "lama_tumbuh_hari": 60,
+      "aktif_di_proyeksi": false
+    }
+  ],
+  "global_signals": [
+    {
+      "kode": "kurs_usd_idr",
+      "nama": "Kurs USD/IDR",
+      "satuan": "Rp",
+      "nilai_awal": 16400.0,
+      "perubahan_14d_pct": 0.4,
+      "intensitas_awal": 0.15,
+      "komoditas_terpapar": ["Terigu", "Kedelai", "Gula", "Minyak goreng"]
+    },
+    {
+      "kode": "indeks_pangan_global",
+      "nama": "Indeks Harga Pangan Global",
+      "satuan": "poin",
+      "nilai_awal": 125.0,
+      "perubahan_14d_pct": 1.2,
+      "intensitas_awal": 0.20,
+      "komoditas_terpapar": ["Terigu", "Kedelai", "Gula"]
+    },
+    {
+      "kode": "harga_pupuk_urea",
+      "nama": "Harga Pupuk (Urea)",
+      "satuan": "USD/ton",
+      "nilai_awal": 420.0,
+      "perubahan_14d_pct": 1.5,
+      "intensitas_awal": 0.18,
+      "komoditas_terpapar": ["Beras", "Jagung pipil", "Bawang merah", "Cabai rawit"]
+    },
+    {
+      "kode": "indeks_energi",
+      "nama": "Indeks Harga Energi",
+      "satuan": "poin",
+      "nilai_awal": 100.0,
+      "perubahan_14d_pct": 0.8,
+      "intensitas_awal": 0.15,
+      "komoditas_terpapar": ["Beras", "Minyak goreng", "Telur"]
+    },
+    {
+      "kode": "indeks_gangguan_logistik",
+      "nama": "Indeks Gangguan Logistik",
+      "satuan": "skala 0-100",
+      "nilai_awal": 35.0,
+      "perubahan_14d_pct": 2.0,
+      "intensitas_awal": 0.35,
+      "komoditas_terpapar": ["Terigu", "Kedelai", "Minyak goreng", "Gula"]
+    }
+  ],
+  "global_events": [
+    {
+      "id": "evt-konflik-gandum",
+      "nama": "Konflik Jalur Gandum dan Pupuk",
+      "deskripsi": "Ketegangan geopolitik menghambat jalur ekspor gandum dan bahan baku pupuk dunia. Pasokan impor turun tajam dan harga pupuk melonjak.",
+      "komoditas_terdampak": ["Terigu", "Kedelai", "Beras", "Jagung pipil"],
+      "parameter": {
+        "delta_s": 0.60,
+        "delta_p": 0.40,
+        "delta_k": 0.10,
+        "delta_h": 0.20,
+        "durasi": 60
+      },
+      "efek_sinyal": {
+        "kurs_usd_idr_pct": 4.0,
+        "harga_pupuk_urea_pct": 22.0,
+        "indeks_gangguan_logistik_val": 78.0,
+        "indeks_pangan_global_pct": 8.0,
+        "indeks_energi_pct": 5.0
+      }
+    },
+    {
+      "id": "evt-gangguan-pelayaran",
+      "nama": "Gangguan Pelayaran dan Lonjakan Energi",
+      "deskripsi": "Jalur pelayaran internasional terhambat sehingga biaya kargo dan harga bahan bakar meningkat drastis.",
+      "komoditas_terdampak": ["Terigu", "Kedelai", "Minyak goreng", "Gula"],
+      "parameter": {
+        "delta_s": 0.40,
+        "delta_p": 0.25,
+        "delta_k": 0.05,
+        "delta_h": 0.10,
+        "durasi": 45
+      },
+      "efek_sinyal": {
+        "kurs_usd_idr_pct": 2.0,
+        "harga_pupuk_urea_pct": 8.0,
+        "indeks_gangguan_logistik_val": 82.0,
+        "indeks_pangan_global_pct": 5.0,
+        "indeks_energi_pct": 30.0
+      }
+    },
+    {
+      "id": "evt-perang-dagang",
+      "nama": "Perang Dagang dan Rupiah Melemah",
+      "deskripsi": "Tarif perdagangan global meningkat dan nilai tukar rupiah melemah terhadap dolar AS, mendongkrak harga pangan impor.",
+      "komoditas_terdampak": ["Terigu", "Kedelai", "Gula"],
+      "parameter": {
+        "delta_s": 0.20,
+        "delta_p": 0.30,
+        "delta_k": 0.15,
+        "delta_h": 0.05,
+        "durasi": 90
+      },
+      "efek_sinyal": {
+        "kurs_usd_idr_pct": 8.0,
+        "harga_pupuk_urea_pct": 6.0,
+        "indeks_gangguan_logistik_val": 55.0,
+        "indeks_pangan_global_pct": 6.0,
+        "indeks_energi_pct": 4.0
+      }
+    }
+  ],
+  "scenario_presets": [
+    {
+      "id": "preset-konflik-gandum",
+      "nama": "Konflik jalur gandum dan pupuk",
+      "delta_s": 0.60,
+      "delta_p": 0.40,
+      "delta_k": 0.10,
+      "delta_h": 0.20,
+      "durasi": 60
+    },
+    {
+      "id": "preset-pelayaran-energi",
+      "nama": "Gangguan pelayaran dan lonjakan energi",
+      "delta_s": 0.40,
+      "delta_p": 0.25,
+      "delta_k": 0.05,
+      "delta_h": 0.10,
+      "durasi": 45
+    },
+    {
+      "id": "preset-perang-dagang",
+      "nama": "Perang dagang dan rupiah melemah",
+      "delta_s": 0.20,
+      "delta_p": 0.30,
+      "delta_k": 0.15,
+      "delta_h": 0.05,
+      "durasi": 90
+    },
+    {
+      "id": "preset-pupuk-mahal",
+      "nama": "Gagal panen karena pupuk mahal",
+      "delta_s": 0.0,
+      "delta_p": 0.0,
+      "delta_k": 0.05,
+      "delta_h": 0.40,
+      "durasi": 90
+    }
+  ],
+  "cluster_villages": [
+    {
+      "id": "v-karangsari",
+      "nama": "Desa Karangsari",
+      "kecamatan": "Sumbermulyo",
+      "kabupaten": "Kabupaten Contoh",
+      "lat": -7.9450,
+      "lon": 112.6250,
+      "luas_lahan_ha": 72.0,
+      "is_own": false,
+      "cluster_id": "gugus-sumbermulyo",
+      "penduduk": 1500,
+      "catatan_peran": "Donor terigu dan kedelai",
+      "doc_by_kode": {
+        "beras": 30.0,
+        "jagung": 26.0,
+        "singkong": 24.0,
+        "terigu": 36.0,
+        "kedelai": 32.0,
+        "telur": 22.0,
+        "minyak": 25.0,
+        "gula": 24.0,
+        "bawang_merah": 22.0,
+        "cabai_rawit": 21.0
+      }
+    },
+    {
+      "id": "v-sumberrejo",
+      "nama": "Desa Sumberrejo",
+      "kecamatan": "Sumbermulyo",
+      "kabupaten": "Kabupaten Contoh",
+      "lat": -7.9900,
+      "lon": 112.6350,
+      "luas_lahan_ha": 110.0,
+      "is_own": false,
+      "cluster_id": "gugus-sumbermulyo",
+      "penduduk": 2100,
+      "catatan_peran": "Donor beras, defisit minyak goreng",
+      "doc_by_kode": {
+        "beras": 55.0,
+        "jagung": 40.0,
+        "singkong": 25.0,
+        "terigu": 21.0,
+        "kedelai": 21.0,
+        "telur": 23.0,
+        "minyak": 12.0,
+        "gula": 24.0,
+        "bawang_merah": 22.0,
+        "cabai_rawit": 22.0
+      }
+    },
+    {
+      "id": "v-mulyorejo",
+      "nama": "Desa Mulyorejo",
+      "kecamatan": "Sumbermulyo",
+      "kabupaten": "Kabupaten Contoh",
+      "lat": -7.9500,
+      "lon": 112.5600,
+      "luas_lahan_ha": 55.0,
+      "is_own": false,
+      "cluster_id": "gugus-sumbermulyo",
+      "penduduk": 1100,
+      "catatan_peran": "Defisit beras (mengajukan bantuan ke Desa Sidomulyo)",
+      "doc_by_kode": {
+        "beras": 14.0,
+        "jagung": 22.0,
+        "singkong": 21.0,
+        "terigu": 18.0,
+        "kedelai": 20.0,
+        "telur": 25.0,
+        "minyak": 22.0,
+        "gula": 23.0,
+        "bawang_merah": 21.0,
+        "cabai_rawit": 20.0
+      }
+    },
+    {
+      "id": "v-tegalsari",
+      "nama": "Desa Tegalsari",
+      "kecamatan": "Sumbermulyo",
+      "kabupaten": "Kabupaten Contoh",
+      "lat": -8.0100,
+      "lon": 112.5800,
+      "luas_lahan_ha": 85.0,
+      "is_own": false,
+      "cluster_id": "gugus-sumbermulyo",
+      "penduduk": 1700,
+      "catatan_peran": "Donor telur, jagung, dan gula",
+      "doc_by_kode": {
+        "beras": 25.0,
+        "jagung": 35.0,
+        "singkong": 24.0,
+        "terigu": 21.0,
+        "kedelai": 18.0,
+        "telur": 40.0,
+        "minyak": 24.0,
+        "gula": 38.0,
+        "bawang_merah": 23.0,
+        "cabai_rawit": 22.0
+      }
+    },
+    {
+      "id": "v-wonokerto",
+      "nama": "Desa Wonokerto",
+      "kecamatan": "Sumbermulyo",
+      "kabupaten": "Kabupaten Contoh",
+      "lat": -7.9200,
+      "lon": 112.6100,
+      "luas_lahan_ha": 48.0,
+      "is_own": false,
+      "cluster_id": "gugus-sumbermulyo",
+      "penduduk": 900,
+      "catatan_peran": "Donor kecil terigu dan kedelai",
+      "doc_by_kode": {
+        "beras": 26.0,
+        "jagung": 25.0,
+        "singkong": 25.0,
+        "terigu": 28.0,
+        "kedelai": 28.0,
+        "telur": 24.0,
+        "minyak": 26.0,
+        "gula": 25.0,
+        "bawang_merah": 24.0,
+        "cabai_rawit": 24.0
+      }
+    }
+  ],
+  "incoming_requests": [
+    {
+      "id": "tr-in-mulyorejo-1",
+      "dari_village_id": "v-sidomulyo",
+      "dari_village_nama": "Desa Sidomulyo",
+      "ke_village_id": "v-mulyorejo",
+      "ke_village_nama": "Desa Mulyorejo",
+      "commodity_id": "c-beras",
+      "commodity_nama": "Beras",
+      "satuan": "kg",
+      "jumlah": 1200.0,
+      "jarak_km": 6.4,
+      "biaya_angkut": 19200.0,
+      "status": "Diajukan",
+      "draf_pesan": "Yth. Pengurus Lumbung Pangan Desa Sidomulyo, mengingat cadangan beras Desa Mulyorejo saat ini berada pada 14,0 hari (Siaga), kami memohon kerja sama distribusi beras sebesar 1.200 kg (jarak tempuh 6,4 km). Terima kasih atas solidaritas antar desa.",
+      "arah": "masuk"
+    }
+  ]
+}

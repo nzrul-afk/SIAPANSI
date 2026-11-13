@@ -53,6 +53,18 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def vercel_path_normalizer(request: Request, call_next):
+    path = request.scope.get("path", "")
+    if path.startswith("/api/index.py"):
+        remainder = path[len("/api/index.py"):]
+        request.scope["path"] = remainder if remainder else "/"
+        path = request.scope["path"]
+    if path.startswith("/v1/"):
+        request.scope["path"] = "/api" + path
+    return await call_next(request)
+
+
 # Uniform error handler in Bahasa Indonesia (Section 13)
 @app.exception_handler(HTTPException)
 async def custom_http_exception_handler(_: Request, exc: HTTPException) -> JSONResponse:

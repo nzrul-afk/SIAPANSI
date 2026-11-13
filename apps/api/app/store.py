@@ -29,9 +29,22 @@ from ml.harvest_model import predict_harvest_yield
 from ml.price_forecasting import forecast_price_4_weeks, generate_104w_price_series
 from ai.validator import sanitize_untrusted_note
 
-ROOT_DIR = Path(__file__).resolve().parents[3]
-SEED_DIR = ROOT_DIR / "data" / "seed"
-_default_db = "/tmp/siapansa.db" if os.getenv("VERCEL") else str(ROOT_DIR / "apps" / "api" / "siapansa.db")
+def _find_seed_dir() -> Path:
+    candidates = [
+        Path(__file__).resolve().parent.parent / "data" / "seed",
+        Path(__file__).resolve().parents[2] / "data" / "seed",
+        Path(__file__).resolve().parents[3] / "data" / "seed" if len(Path(__file__).resolve().parents) > 3 else Path(__file__).resolve().parent,
+        Path.cwd() / "data" / "seed",
+        Path("/var/task/data/seed"),
+        Path("/var/task/api/data/seed"),
+    ]
+    for c in candidates:
+        if c.exists() and (c / "village.json").exists():
+            return c
+    return candidates[0]
+
+SEED_DIR = _find_seed_dir()
+_default_db = "/tmp/siapansa.db" if os.getenv("VERCEL") else str(Path(__file__).resolve().parent / "siapansa.db")
 DB_PATH = Path(os.getenv("SIAPANSA_DB_PATH", _default_db))
 
 

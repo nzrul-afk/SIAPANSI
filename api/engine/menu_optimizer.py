@@ -2,7 +2,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Dict, List, Optional
 import numpy as np
-from scipy.optimize import minimize
+try:
+    from scipy.optimize import minimize
+except ImportError:
+    minimize = None
 
 
 @dataclass
@@ -148,41 +151,43 @@ def optimize_menu_plan(
             {"type": "ineq", "fun": lambda x, ev=e_vec, et=e_target: float( 1.14 * et - np.dot(ev, x))},
             {"type": "ineq", "fun": lambda x, pv=p_vec, pt=p_target: float( np.dot(pv, x) - 1.01 * pt)},
         ]
-        res = minimize(
-            lambda x, cv=c: float(np.dot(cv, x)),
-            x0,
-            method="SLSQP",
-            bounds=bounds,
-            constraints=cons,
-        )
-        if not res.success or np.dot(e_vec, res.x) < 0.95 * e_target:
-            # Relaxation 1: allow wider bounds on selected items
-            relaxed_bounds = []
-            for i, f in enumerate(candidate_foods):
-                mx = f.max_g * scale * 1.6
-                if f.commodity_id and f.commodity_id in alloc_rem:
-                    mx = min(mx, (alloc_rem[f.commodity_id] * 1000.0) / float(n_penerima))
-                mn = min(mx, 25.0) if i in (chosen_carb, chosen_prot1, chosen_prot2, chosen_veg) else 0.0
-                if i not in (chosen_carb, chosen_prot1, chosen_prot2, chosen_veg) and f.kategori != "pelengkap":
-                    mx = 0.0
-                relaxed_bounds.append((mn, max(mn, mx)))
-            x0_rel = np.array([(b[0] + b[1]) * 0.55 for b in relaxed_bounds], dtype=float)
-            cons_rel = [
-                {"type": "ineq", "fun": lambda x, ev=e_vec, et=e_target: float(np.dot(ev, x) - 0.96 * et)},
-                {"type": "ineq", "fun": lambda x, ev=e_vec, et=e_target: float(1.25 * et - np.dot(ev, x))},
-                {"type": "ineq", "fun": lambda x, pv=p_vec, pt=p_target: float(np.dot(pv, x) - 0.96 * pt)},
-            ]
+        if minimize is not None:
             res = minimize(
                 lambda x, cv=c: float(np.dot(cv, x)),
-                x0_rel,
+                x0,
                 method="SLSQP",
-                bounds=relaxed_bounds,
-                constraints=cons_rel,
+                bounds=bounds,
+                constraints=cons,
             )
-            if "Batas variasi dilonggarkan agar target gizi 95% terpenuhi." not in relaxed_reasons:
-                relaxed_reasons.append("Batas variasi dilonggarkan agar target gizi 95% terpenuhi.")
-
-        x_sol = res.x if res.x is not None else x0
+            if not res.success or np.dot(e_vec, res.x) < 0.95 * e_target:
+                # Relaxation 1: allow wider bounds on selected items
+                relaxed_bounds = []
+                for i, f in enumerate(candidate_foods):
+                    mx = f.max_g * scale * 1.6
+                    if f.commodity_id and f.commodity_id in alloc_rem:
+                        mx = min(mx, (alloc_rem[f.commodity_id] * 1000.0) / float(n_penerima))
+                    mn = min(mx, 25.0) if i in (chosen_carb, chosen_prot1, chosen_prot2, chosen_veg) else 0.0
+                    if i not in (chosen_carb, chosen_prot1, chosen_prot2, chosen_veg) and f.kategori != "pelengkap":
+                        mx = 0.0
+                    relaxed_bounds.append((mn, max(mn, mx)))
+                x0_rel = np.array([(b[0] + b[1]) * 0.55 for b in relaxed_bounds], dtype=float)
+                cons_rel = [
+                    {"type": "ineq", "fun": lambda x, ev=e_vec, et=e_target: float(np.dot(ev, x) - 0.96 * et)},
+                    {"type": "ineq", "fun": lambda x, ev=e_vec, et=e_target: float(1.25 * et - np.dot(ev, x))},
+                    {"type": "ineq", "fun": lambda x, pv=p_vec, pt=p_target: float(np.dot(pv, x) - 0.96 * pt)},
+                ]
+                res = minimize(
+                    lambda x, cv=c: float(np.dot(cv, x)),
+                    x0_rel,
+                    method="SLSQP",
+                    bounds=relaxed_bounds,
+                    constraints=cons_rel,
+                )
+                if "Batas variasi dilonggarkan agar target gizi 95% terpenuhi." not in relaxed_reasons:
+                    relaxed_reasons.append("Batas variasi dilonggarkan agar target gizi 95% terpenuhi.")
+            x_sol = res.x if res.x is not None else x0
+        else:
+            x_sol = x0
         # Ensure energy >= 96% target if solver stopped slightly early
         curr_e = float(np.dot(e_vec, x_sol))
         if 0 < curr_e < 0.96 * e_target:

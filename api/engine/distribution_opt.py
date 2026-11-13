@@ -2,7 +2,10 @@ from __future__ import annotations
 import math
 from typing import Dict, List, Optional
 import numpy as np
-from scipy.optimize import minimize
+try:
+    from scipy.optimize import minimize
+except ImportError:
+    minimize = None
 
 
 def haversine_road_km(lat1: float, lon1: float, lat2: float, lon2: float, road_factor: float = 1.3) -> float:
@@ -157,14 +160,17 @@ def optimize_village_distribution(
         for j in range(n_r):
             cons.append({"type": "eq", "fun": lambda x, row=A_eq[j], rhs=b_eq[j]: float(np.dot(row, x) - rhs)})
 
-        res = minimize(
-            lambda x, cv=c_vec: float(np.dot(cv, x)),
-            x0,
-            method="SLSQP",
-            bounds=bounds,
-            constraints=cons,
-        )
-        sol_vec = res.x if res.success and res.x is not None else x0
+        if minimize is not None:
+            res = minimize(
+                lambda x, cv=c_vec: float(np.dot(cv, x)),
+                x0,
+                method="SLSQP",
+                bounds=bounds,
+                constraints=cons,
+            )
+            sol_vec = res.x if res.success and res.x is not None else x0
+        else:
+            sol_vec = x0
 
         for i, d_v in enumerate(donors):
             for j, r_v in enumerate(receivers):

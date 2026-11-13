@@ -385,6 +385,8 @@ let stateEvents = [
   },
 ];
 
+let stateSavedScenarios: Array<any> = [];
+
 export async function handleClientMockRoute(path: string, options: RequestInit = {}): Promise<any> {
   const method = (options.method || 'GET').toUpperCase();
   const cleanPath = path.replace(/^\/api\/v1/, '').replace(/^\/api/, '');
@@ -679,46 +681,207 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
     return {
       presets: [
         { id: 'preset-konflik-gandum', nama: 'Konflik jalur gandum dan pupuk', delta_s: 0.60, delta_p: 0.40, delta_k: 0.10, delta_h: 0.20, durasi: 60 },
-        { id: 'preset-pupuk-mahal', nama: 'Gagal panen karena pupuk mahal', delta_s: 0.0, delta_p: 0.0, delta_k: 0.05, delta_h: 0.40, durasi: 90 },
+        { id: 'preset-pupuk-mahal', nama: 'Gagal panen pupuk mahal & kemarau', delta_s: 0.10, delta_p: 0.20, delta_k: 0.05, delta_h: 0.40, durasi: 90 },
+        { id: 'preset-krisis-impor', nama: 'Embargo impor gandum & kedelai', delta_s: 0.90, delta_p: 0.60, delta_k: 0.15, delta_h: 0.10, durasi: 60 },
+        { id: 'preset-inflasi', nama: 'Lonjakan inflasi & pelemahan rupiah', delta_s: 0.20, delta_p: 0.50, delta_k: 0.25, delta_h: 0.05, durasi: 45 },
       ],
     };
   }
 
   if (cleanPath.startsWith('/scenarios/run') || (cleanPath === '/scenarios' && method === 'POST')) {
-    const durasi = body.durasi || 60;
-    const deltaS = body.delta_s || 0.6;
-    const deltaP = body.delta_p || 0.4;
-    const chart = [];
-    for (let d = 0; d <= durasi; d += 5) {
-      const bRem = Math.max(0, 810 - d * 13.5);
-      const sRem = Math.max(0, 810 - d * 25.0 * (1 + deltaS * 0.5));
-      chart.push({ hari: d, baseline: Math.round(bRem), skenario: Math.round(sRem) });
+    const nama = body.nama || 'Simulasi Guncangan Pangan Desa';
+    const T = typeof body.durasi === 'number' ? Math.max(7, Math.min(180, body.durasi)) : 60;
+    const dS = typeof body.delta_s === 'number' ? Math.max(0, Math.min(1, body.delta_s)) : 0.6;
+    const dP = typeof body.delta_p === 'number' ? Math.max(0, Math.min(1, body.delta_p)) : 0.4;
+    const dH = typeof body.delta_h === 'number' ? Math.max(0, Math.min(0.6, body.delta_h)) : 0.2;
+    const dK = typeof body.delta_k === 'number' ? Math.max(0, Math.min(0.3, body.delta_k)) : 0.1;
+
+    const isZero = dS < 0.001 && dP < 0.001 && dH < 0.001 && dK < 0.001;
+
+    let totalBiayaTambahan = 0;
+    const perCommodity: any[] = [];
+    let weakestComm: any = null;
+    let weakestDoc = 999;
+
+    const commDefs: Record<string, { eksposur: number; pupuk: number; rho: number }> = {
+      'c-beras': { eksposur: 0.02, pupuk: 0.35, rho: 0.05 },
+      'c-jagung': { eksposur: 0.15, pupuk: 0.40, rho: 0.15 },
+      'c-singkong': { eksposur: 0.0, pupuk: 0.10, rho: 0.0 },
+      'c-terigu': { eksposur: 1.0, pupuk: 0.0, rho: 1.0 },
+      'c-kedelai': { eksposur: 0.85, pupuk: 0.20, rho: 0.85 },
+      'c-telur': { eksposur: 0.35, pupuk: 0.0, rho: 0.35 },
+      'c-minyak': { eksposur: 0.0, pupuk: 0.0, rho: 0.05 },
+      'c-gula': { eksposur: 0.45, pupuk: 0.0, rho: 0.45 },
+      'c-bawang': { eksposur: 0.05, pupuk: 0.30, rho: 0.05 },
+      'c-cabai': { eksposur: 0.0, pupuk: 0.20, rho: 0.0 },
+    };
+
+    stateOverview.komoditas.forEach((comm: any) => {
+      const def = commDefs[comm.id] || { eksposur: comm.eksposur_impor || 0, pupuk: 0.2, rho: 0.1 };
+      const e_k = def.eksposur;
+      const f_k = def.pupuk;
+      const rho_k = def.rho;
+
+      const s_k = comm.stok_efektif;
+      const d_k = comm.kebutuhan_harian;
+      const harga_k = comm.harga_sekarang;
+
+      // 1. Baseline with routine supply
+      const drain_base = Math.max(0.001, d_k * (1.0 - rho_k));
+      const raw_base = s_k / drain_base;
+      const base_exceeds = raw_base > 180;
+      const doc_base = Math.min(180, raw_base);
+      const kekurangan_base = Math.max(0, d_k * T * (1.0 - rho_k) - s_k);
+
+      // 2. Scenario shocks
+      // rho'_k = rho_k * (1 - delta_s * e_k)
+      const rho_prime = Math.max(0, rho_k * (1.0 - dS * e_k));
+      // harga'_k = harga_k * (1 + delta_p * e_k) * (1 + delta_k * e_k)
+      const harga_prime = Math.round(harga_k * (1.0 + dP * e_k) * (1.0 + dK * e_k));
+      // Harvest loss impact on local production
+      const localLoss = (1.0 - e_k) * dH * (0.5 + 0.5 * f_k);
+      const drain_prime = Math.max(0.001, d_k * (1.0 - rho_prime) * (1.0 + localLoss));
+
+      let doc_scen = isZero ? doc_base : s_k / drain_prime;
+      const scen_exceeds = doc_scen > 180;
+      doc_scen = Math.min(180, doc_scen);
+
+      const kekurangan_scen = isZero ? kekurangan_base : Math.max(0, d_k * T * (1.0 - rho_prime) * (1.0 + localLoss) - s_k);
+      const biaya_tambahan_k = isZero ? 0 : Math.max(0, (kekurangan_scen * harga_prime) - (kekurangan_base * harga_k));
+      totalBiayaTambahan += biaya_tambahan_k;
+
+      // Status classification
+      let status = 'Aman';
+      if (doc_scen < 3) status = 'Kritis';
+      else if (doc_scen < 7) status = 'Siaga';
+      else if (doc_scen < 14) status = 'Waspada';
+      else if (doc_scen < 21) status = 'Waspada';
+
+      if (doc_scen < weakestDoc) {
+        weakestDoc = doc_scen;
+        weakestComm = { nama: comm.nama, hari_bertahan: +doc_scen.toFixed(1) };
+      }
+
+      perCommodity.push({
+        commodity_id: comm.id,
+        kode: comm.kode,
+        nama: comm.nama,
+        satuan: comm.satuan,
+        kelompok: comm.kelompok,
+        stok_awal: s_k,
+        kebutuhan_harian: d_k,
+        rho_baseline: +rho_k.toFixed(2),
+        rho_skenario: +rho_prime.toFixed(2),
+        drain_baseline: +drain_base.toFixed(1),
+        drain_skenario: +drain_prime.toFixed(1),
+        doc_baseline: +doc_base.toFixed(1),
+        doc_baseline_lebih_180: base_exceeds,
+        doc_scen: doc_scen,
+        doc_skenario: +doc_scen.toFixed(1),
+        doc_skenario_lebih_180: scen_exceeds,
+        kekurangan_baseline_kg: Math.round(kekurangan_base),
+        kekurangan_skenario_kg: Math.round(kekurangan_scen),
+        harga_baseline: harga_k,
+        harga_skenario: harga_prime,
+        tambahan_biaya_rp: Math.round(biaya_tambahan_k),
+        status,
+      });
+    });
+
+    // Chart projection for target commodity (Terigu if shocked, or weakest)
+    const targetComm = (dS > 0.1 || dP > 0.1)
+      ? (perCommodity.find((c) => c.kode === 'terigu') || perCommodity[0])
+      : (perCommodity.find((c) => c.commodity_id === weakestComm?.commodity_id) || perCommodity[0]);
+
+    const chart: any[] = [];
+    const s0 = targetComm.stok_awal;
+    const db = targetComm.drain_baseline;
+    const ds = targetComm.drain_skenario;
+    const step = Math.max(1, Math.floor(T / 12));
+    for (let d = 0; d <= T; d += step) {
+      chart.push({
+        hari: d,
+        baseline: Math.round(Math.max(0, s0 - db * d)),
+        skenario: Math.round(Math.max(0, s0 - ds * d)),
+      });
+    }
+    if (chart[chart.length - 1].hari !== T) {
+      chart.push({
+        hari: T,
+        baseline: Math.round(Math.max(0, s0 - db * T)),
+        skenario: Math.round(Math.max(0, s0 - ds * T)),
+      });
     }
 
-    return {
-      nama: body.nama || 'Konflik Jalur Gandum dan Pupuk',
-      durasi: durasi,
-      komoditas_penentu_baru: { nama: 'Kedelai', hari_bertahan: 9.8 },
-      tambahan_biaya_rp: 14500000,
-      skor_sebelum: { skor_total: 77.8 },
-      skor_sesudah: { skor_total: +(77.8 - (deltaS * 20 + deltaP * 10)).toFixed(1) },
-      komoditas_grafik: 'Terigu',
+    // Skor ketahanan komposit
+    const skorSebelum = 77.8;
+    const skorSesudah = isZero
+      ? skorSebelum
+      : Math.max(15.0, +(skorSebelum - (dS * 22 + dP * 14 + dH * 18 + dK * 8)).toFixed(1));
+
+    // Dynamic recommendations
+    const rekomendasi: any[] = [];
+    let pIdx = 1;
+    if (dS > 0.1 || dP > 0.1) {
+      rekomendasi.push({
+        prioritas: pIdx++,
+        judul: 'Substitusi Pangan Impor ke Pangan Lokal Desa',
+        tindakan: 'Alihkan konsumsi terigu ke olahan singkong (mocaf) dan jagung lokal Desa Sidomulyo untuk menekan ketergantungan pasokan impor.',
+      });
+    }
+    if (totalBiayaTambahan > 0) {
+      rekomendasi.push({
+        prioritas: pIdx++,
+        judul: 'Alokasi Belanja & Pengamanan Pasokan Awal',
+        tindakan: `Siapkan anggaran cadangan Rp ${Math.round(totalBiayaTambahan).toLocaleString('id-ID')} untuk menutup estimasi defisit sebelum lonjakan harga pasar penuh terjadi.`,
+      });
+    }
+    if (weakestDoc < 21) {
+      rekomendasi.push({
+        prioritas: pIdx++,
+        judul: `Pengajuan Bantuan Lumbung Donor untuk ${weakestComm?.nama || 'Komoditas Terlemah'}`,
+        tindakan: `Ajukan transfer pasokan lumbung antar-desa ke Desa Karangsari yang memiliki cadangan aman surplus di atas 21 hari.`,
+      });
+    }
+    if (dH > 0.1) {
+      rekomendasi.push({
+        prioritas: pIdx++,
+        judul: 'Optimalisasi Panen Cepat & Cadangan Lumbung',
+        tindakan: 'Percepat pemupukan berimbang dan jadwalkan komoditas umur pendek (sayur gizi & ubi jalar) untuk menutup potensi penurunan panen lokal.',
+      });
+    }
+    if (rekomendasi.length === 0) {
+      rekomendasi.push({
+        prioritas: 1,
+        judul: 'Kondisi Normal / Baseline Aman',
+        tindakan: 'Tidak terdeteksi guncangan signifikan. Pertahankan pemantauan stok lumbung rutin dan jadwal tanam.',
+      });
+    }
+
+    const narasi = isZero
+      ? 'Kondisi Baseline (Tanpa Guncangan): Pasokan rutin berjalan normal, skor ketahanan desa stabil di 77,8 poin.'
+      : `Simulasi guncangan: Pasokan impor terpangkas ${(dS * 100).toFixed(0)}%, harga naik ${(dP * 100).toFixed(0)}%, panen turun ${(dH * 100).toFixed(0)}%. Skor ketahanan desa terkoreksi dari ${skorSebelum} menjadi ${skorSesudah} poin.`;
+
+    const resultPayload = {
+      nama,
+      durasi: T,
+      komoditas_penentu_baru: weakestComm || { nama: 'Kedelai', hari_bertahan: 9.8 },
+      tambahan_biaya_rp: Math.round(totalBiayaTambahan),
+      skor_sebelum: { skor_total: skorSebelum },
+      skor_sesudah: { skor_total: skorSesudah },
+      komoditas_grafik: targetComm.nama,
       grafik_proyeksi: chart,
-      sumber_narasi: 'Engine Deterministik SIAPANSA',
-      narasi_ringkasan: `Simulasi guncangan: Terigu turun drastis karena pasokan impor terpangkas ${(deltaS * 100).toFixed(0)}%. Harga pasar naik ${(deltaP * 100).toFixed(0)}%.`,
-      rekomendasi: [
-        { prioritas: 1, judul: 'Substitusi Pangan Lokal Desa', tindakan: 'Alihkan konsumsi terigu ke olahan singkong (mocaf) dan jagung lokal Desa Sidomulyo.' },
-        { prioritas: 2, judul: 'Koordinasi Transfer Lumbung Tetangga', tindakan: 'Ajukan transfer kedelai 350 kg dari Desa Karangsari (cadangan aman 32 hari).' },
-        { prioritas: 3, judul: 'Gelar Operasi Pasar / Pasar Murah Lumbung', tindakan: 'Lepas sebagian cadangan beras lumbung untuk meredam lonjakan harga pangan.' },
-      ],
-      per_komoditas: [
-        { commodity_id: 'c-beras', nama: 'Beras', satuan: 'kg', rho_baseline: 0.05, rho_skenario: 0.05, doc_baseline: 38.0, doc_baseline_lebih_180: false, doc_skenario: 35.0, doc_skenario_lebih_180: false, kekurangan_skenario_kg: 0, harga_skenario: 14500, status: 'Aman' },
-        { commodity_id: 'c-terigu', nama: 'Terigu', satuan: 'kg', rho_baseline: 1.0, rho_skenario: 0.4, doc_baseline: 15.0, doc_baseline_lebih_180: false, doc_skenario: 8.5, doc_skenario_lebih_180: false, kekurangan_skenario_kg: 1200, harga_skenario: 18500, status: 'Siaga' },
-        { commodity_id: 'c-kedelai', nama: 'Kedelai', satuan: 'kg', rho_baseline: 0.85, rho_skenario: 0.5, doc_baseline: 14.5, doc_baseline_lebih_180: false, doc_skenario: 9.8, doc_skenario_lebih_180: false, kekurangan_skenario_kg: 750, harga_skenario: 16800, status: 'Siaga' },
-        { commodity_id: 'c-jagung', nama: 'Jagung', satuan: 'kg', rho_baseline: 0.15, rho_skenario: 0.15, doc_baseline: 28.0, doc_baseline_lebih_180: false, doc_skenario: 25.0, doc_skenario_lebih_180: false, kekurangan_skenario_kg: 0, harga_skenario: 8500, status: 'Waspada' },
-        { commodity_id: 'c-singkong', nama: 'Singkong', satuan: 'kg', rho_baseline: 0.0, rho_skenario: 0.0, doc_baseline: 20.0, doc_baseline_lebih_180: false, doc_skenario: 20.0, doc_skenario_lebih_180: false, kekurangan_skenario_kg: 0, harga_skenario: 6000, status: 'Waspada' },
-      ],
+      sumber_narasi: 'Engine Deterministik SIAPANSA (Bagian 9.7 PRD)',
+      narasi_ringkasan: narasi,
+      rekomendasi,
+      per_komoditas: perCommodity,
     };
+
+    if (method === 'POST' && cleanPath === '/scenarios') {
+      stateSavedScenarios.push(resultPayload);
+    }
+
+    return resultPayload;
   }
 
   // 9. Nutrition & PMT Menu Generator (F9)

@@ -161,7 +161,7 @@ export const DashboardView: React.FC<{
         <div className="flex items-center justify-between">
           <h3 className="font-bold text-sm flex items-center gap-1.5"><Bell className="w-4 h-4 text-brand-700" />Perlu Tindakan</h3>
           <button type="button" onClick={() => onNavigate('peringatan')} className="text-xs font-bold text-brand-700 underline">
-            Lihat semua ({overview.jumlah_peringatan_aktif})
+            Lihat semua ({overview.jumlah_peringatan_aktif ?? overview.peringatan_teratas?.length ?? 2})
           </button>
         </div>
         {alerts.length === 0 && <p className="text-xs text-stone-600">Tidak ada peringatan aktif.</p>}

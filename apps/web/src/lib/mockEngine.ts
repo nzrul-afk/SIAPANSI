@@ -246,6 +246,7 @@ const INITIAL_OVERVIEW = {
       rincian_sumber: { Lumbung: 50, Poktan: 36, 'Rumah Tangga': 43, Pedagang: 14 },
     },
   ],
+  jumlah_peringatan_aktif: 3,
   peringatan_teratas: [
     {
       id: 'alt-R1-c-singkong',
@@ -626,10 +627,10 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
   if (cleanPath.includes('/opname') && method === 'POST') {
     const cid = cleanPath.split('/')[2];
     const comm = stateOverview.komoditas.find((c: any) => c.id === cid);
-    const fisik = body.jumlah_fisik ?? 17000;
+    const fisik = typeof body.jumlah_fisik === 'number' ? body.jumlah_fisik : parseFloat(body.jumlah_fisik) || 17000;
     if (comm) {
       comm.stok_efektif = fisik;
-      comm.hari_bertahan = +(fisik / comm.kebutuhan_harian).toFixed(1);
+      recalculateOverviewSummary();
     }
     return {
       status: 'sukses',
@@ -648,7 +649,7 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
         } else {
           comm.stok_efektif += Number(body.jumlah);
         }
-        comm.hari_bertahan = +(comm.stok_efektif / comm.kebutuhan_harian).toFixed(1);
+        recalculateOverviewSummary();
       }
     }
     return {
@@ -1691,27 +1692,43 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
   if (cleanPath.startsWith('/assistant/chat')) {
     const q = (body.pesan || body.pertanyaan || '').toLowerCase();
     let reply = '';
-    let toolSummary = { tool: 'get_status', label: 'Engine Ketahanan Pangan Desa Sidomulyo', ringkasan_data: { status: 'Aman', doc_pokok: 32.8 } };
+    const pokokDays = stateOverview.pool_pokok?.hari_bertahan ?? 32.8;
+    const protDays = stateOverview.pool_protein?.hari_bertahan ?? 15.3;
+    const weakest = stateOverview.titik_terlemah ?? { nama: 'Kedelai', hari_bertahan: 14.5, status: 'Waspada' };
+    let toolSummary = {
+      tool: 'get_status',
+      label: 'Engine Ketahanan Pangan Desa Sidomulyo',
+      ringkasan_data: { status: stateOverview.pool_pokok?.status || 'Aman', doc_pokok: pokokDays, doc_protein: protDays, titik_terlemah: `${weakest.nama} (${weakest.hari_bertahan} hr)` },
+    };
 
-    if (q.includes('terigu') && (q.includes('60') || q.includes('krisis') || q.includes('impor'))) {
-      reply =
-        'Bila impor terganggu 60%, cadangan terigu Desa Sidomulyo (saat ini 810 kg) akan anjlok menjadi 8,5 hari bertahan (Status: Siaga). Disarankan substitusi menggunakan tepung mocaf singkong dan jagung lokal.';
-      toolSummary = { tool: 'simulate_shock', label: 'Engine Simulasi Guncangan (F6)', ringkasan_data: { shock: 'Impor -60%', doc_baru: 8.5, status: 'Siaga' } };
-    } else if (q.includes('kedelai') && (q.includes('bantu') || q.includes('desa'))) {
-      reply =
-        'Berdasarkan optimasi jaringan gugus desa, Desa Karangsari memiliki cadangan kedelai 32 hari (surplus 11 hari di atas batas donor 21 hari). Anda dapat mengajukan transfer bantuan 350 kg kedelai dengan jarak angkut 4,2 km.';
-      toolSummary = { tool: 'optimize_distribution', label: 'Optimasi Jaringan Desa (F10)', ringkasan_data: { donor: 'Desa Karangsari', volume_kg: 350, doc_donor: 32.0 } };
-    } else if (q.includes('menu') || q.includes('pmt')) {
-      reply =
-        'Telah disusun menu PMT 7 hari tanpa terigu berbasis jagung, tempe bacem, dan bayam kelor lokal. Total biaya rata-rata Rp 5.950 per porsi dengan pemenuhan 101,8% energi dan 136,7% protein AKG balita.';
-      toolSummary = { tool: 'optimize_menu', label: 'Optimasi Menu LP (F9)', ringkasan_data: { prioritas: 'hindari_impor', biaya_porsi: 5950, persen_akg: '100%+' } };
-    } else if (q.includes('status') || q.includes('hari ini') || q.includes('pangan')) {
-      reply =
-        'Hari ini ketahanan pangan pokok Desa Sidomulyo bertahan 32,8 hari (Status: Aman, melampaui target 30 hari). Titik terlemah berada pada Kedelai (14,5 hari) dan Terigu (15,0 hari) yang memerlukan pemantauan ketat.';
-      toolSummary = { tool: 'get_status', label: 'Status Cadangan FEFO (F2)', ringkasan_data: { doc_pokok: 32.8, terlemah: 'Kedelai (14.5 hari)' } };
+    if (q.includes('terigu') && (q.includes('60') || q.includes('krisis') || q.includes('impor') || q.includes('guncangan'))) {
+      const terigu = stateOverview.komoditas.find((c: any) => c.id === 'c-terigu') || { stok_efektif: 810, hari_bertahan: 15.0 };
+      const shockDays = +(terigu.hari_bertahan * 0.4).toFixed(1);
+      reply = `Bila impor gandum terganggu 60%, cadangan terigu Desa Sidomulyo (saat ini ${formatAngka(terigu.stok_efektif, 0)} kg) anjlok menjadi ${shockDays} hari bertahan (Status: Siaga). Disarankan substitusi menggunakan tepung mocaf singkong dan jagung lokal.`;
+      toolSummary = { tool: 'simulate_shock', label: 'Engine Simulasi Guncangan (F6)', ringkasan_data: { shock: 'Impor -60%', doc_baru: shockDays, status: 'Siaga' } };
+    } else if (q.includes('kedelai') && (q.includes('bantu') || q.includes('desa') || q.includes('donor') || q.includes('transfer'))) {
+      reply = `Berdasarkan optimasi jaringan gugus desa, Desa Karangsari memiliki cadangan kedelai 32,0 hari (surplus 11 hari di atas batas donor 21 hari). Anda dapat mengajukan transfer bantuan 350 kg kedelai dengan jarak angkut 4,2 km.`;
+      toolSummary = { tool: 'optimize_distribution', label: 'Optimasi Jaringan Gugus Desa (F10)', ringkasan_data: { donor: 'Desa Karangsari', volume_kg: 350, doc_donor: 32.0, jarak_km: 4.2 } };
+    } else if (q.includes('menu') || q.includes('pmt') || q.includes('balita') || q.includes('resep')) {
+      reply = `Telah disusun menu PMT 7 hari tanpa terigu berbasis jagung, tempe bacem, dan bayam kelor lokal. Total biaya rata-rata Rp 5.950 per porsi dengan pemenuhan 101,8% energi dan 136,7% protein AKG balita.`;
+      toolSummary = { tool: 'optimize_menu', label: 'Optimasi Menu Linear Programming (F9)', ringkasan_data: { prioritas: 'hindari_impor', biaya_porsi: 5950, persen_akg: '100%+' } };
+    } else if (q.includes('panen') || q.includes('tanam') || q.includes('padi')) {
+      reply = `Model prediksi panen Machine Learning memperkirakan panen padi sawah Sidomulyo (12 ha varietas Inpari 32) pada 28 November 2026 menghasilkan estimasi 3.960 kg beras bersih (+8,8 hari cadangan desa).`;
+      toolSummary = { tool: 'predict_yield', label: 'Prediksi Panen ML (F7)', ringkasan_data: { komoditas: 'Padi', estimasi_kg: 3960, tambah_doc: 8.8 } };
+    } else if (q.includes('harga') || q.includes('pasar') || q.includes('inflasi')) {
+      const topPrice = [...stateOverview.komoditas].sort((a: any, b: any) => b.harga_sekarang - a.harga_sekarang)[0];
+      reply = `Harga komoditas pangan lokal Sidomulyo terpantau stabil dengan skor eksposur pasar global ${stateOverview.skor_ketahanan?.skor_eksposur_global || 3.4}/10. Komoditas dengan harga tertinggi saat ini adalah ${topPrice?.nama || 'Cabai'} (Rp ${topPrice?.harga_sekarang?.toLocaleString('id-ID')}/${topPrice?.satuan}).`;
+      toolSummary = { tool: 'price_signals', label: 'Sinyal Global & Harga Pasar (F8)', ringkasan_data: { eksposur: stateOverview.skor_ketahanan?.skor_eksposur_global, komoditas_tertinggi: topPrice?.nama } };
+    } else if (q.includes('sukomakmur') || q.includes('defisit') || q.includes('tetangga')) {
+      reply = `Desa Sukomakmur berada pada status Siaga (cadangan pangan terendah 9,5 hari). Sukomakmur telah mengajukan permohonan pinjam cadangan 500 kg beras ke lumbung Sidomulyo dan aman disetujui (sisa cadangan Sidomulyo tetap 36,9 hari di atas batas aman 21 hari).`;
+      toolSummary = { tool: 'cluster_status', label: 'Jaringan Gugus Sumbermulyo (F10)', ringkasan_data: { desa: 'Sukomakmur', status: 'Siaga', permohonan: '500 kg Beras' } };
+    } else if (q.includes('stok') || q.includes('beras') || q.includes('lumbung')) {
+      const beras = stateOverview.komoditas.find((c: any) => c.id === 'c-beras') || { stok_efektif: 17100, hari_bertahan: 38.0 };
+      reply = `Stok efektif beras Desa Sidomulyo saat ini mencapai ${formatAngka(beras.stok_efektif, 0)} kg, cukup untuk ${formatAngka(beras.hari_bertahan, 1)} hari konsumsi warga (Status: Aman di atas target 30 hari).`;
+      toolSummary = { tool: 'get_commodity_stock', label: 'Inventarisasi Lumbung (F2)', ringkasan_data: { komoditas: 'Beras', stok_kg: beras.stok_efektif, doc_hari: beras.hari_bertahan } };
     } else {
-      reply =
-        `Pertanyaan Anda terkait data pangan desa telah diverifikasi engine deterministik. Cadangan pangan pokok desa mampu bertahan 32,8 hari. Seluruh rekomendasi AI telah disesuaikan dengan stok riil lumbung Sidomulyo.`;
+      reply = `Hari ini ketahanan pangan pokok Desa Sidomulyo mampu bertahan ${pokokDays} hari (${stateOverview.pool_pokok?.status || 'Aman'}, target ${stateOverview.target_hari || 30} hari). Cadangan protein bertahan ${protDays} hari. Titik terlemah berada pada ${weakest.nama} (${weakest.hari_bertahan} hari) yang membutuhkan pemantauan ketat.`;
+      toolSummary = { tool: 'get_status', label: 'Status Cadangan FEFO (F2)', ringkasan_data: { doc_pokok: pokokDays, doc_protein: protDays, terlemah: `${weakest.nama} (${weakest.hari_bertahan} hr)` } };
     }
 
     return {

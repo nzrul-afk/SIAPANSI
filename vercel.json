@@ -4,7 +4,8 @@
   "outputDirectory": "apps/web/dist",
   "functions": {
     "api/index.py": {
-      "includeFiles": "api/**"
+      "includeFiles": "api/**",
+      "maxDuration": 30
     }
   },
   "rewrites": [

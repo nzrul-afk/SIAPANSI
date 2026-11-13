@@ -232,7 +232,7 @@ def predict_harvest_yield(
         rain_factor = 1.0 - 0.15 * abs(curah_hujan_30d - 180.0) / 180.0
         season_factor = 1.03 if bulan in (10, 11, 12, 1, 2, 3) else 0.96
         prod_kg_ha = max(200.0, eff_base * pupuk_factor * air_factor * rain_factor * season_factor)
-        raw_med = prod_kg_ha * luas
+        raw_med = prod_kg_ha
         raw_p10 = raw_med * 0.88
         raw_p90 = raw_med * 1.12
         days_delay = (2 - p_idx) * 4 + (0 if a_idx == 1 else 3)
@@ -250,8 +250,13 @@ def predict_harvest_yield(
     vol_p90 = round(prod_p90 * luas * shock_mult, 1)
 
     # Baseline comparison (cukup pupuk, irigasi_teknis, no shock)
-    x_base = np.array([[c_idx, luas, bulan, 180.0, 2, 1]], dtype=float)
-    base_vol = round(float(bundle["model_med"].predict(x_base)[0]) * luas, 1)
+    if bundle is not None and "model_med" in bundle:
+        x_base = np.array([[c_idx, luas, bulan, 180.0, 2, 1]], dtype=float)
+        base_vol = round(float(bundle["model_med"].predict(x_base)[0]) * luas, 1)
+    else:
+        spec = CROP_BASE_SPECS[crop_key]
+        eff_base = spec["base_yield_kg_ha"] * spec["konversi"]
+        base_vol = round(eff_base * 1.04 * luas, 1)
     rasio_baseline_pct = round((vol_med / base_vol) * 100.0, 1) if base_vol > 0 else 100.0
 
     # Confidence from relative interval width

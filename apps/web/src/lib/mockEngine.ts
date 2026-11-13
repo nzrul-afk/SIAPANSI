@@ -387,6 +387,15 @@ let stateEvents = [
 
 let stateSavedScenarios: Array<any> = [];
 
+const CROP_BASE_SPECS: Record<string, { base_yield_kg_ha: number; konversi: number; days: number; varietas: string[] }> = {
+  padi: { base_yield_kg_ha: 5500.0, konversi: 0.60, days: 105, varietas: ['Inpari 32', 'Ciherang', 'IR64'] },
+  jagung: { base_yield_kg_ha: 5000.0, konversi: 1.00, days: 95, varietas: ['Bisi 18', 'Pioneer P27', 'NK212'] },
+  kedelai: { base_yield_kg_ha: 1500.0, konversi: 1.00, days: 85, varietas: ['Anjasmoro', 'Grobogan', 'Argomulyo'] },
+  singkong: { base_yield_kg_ha: 20000.0, konversi: 0.33, days: 210, varietas: ['Manggu', 'Kasesa', 'Adira 4'] },
+  cabai_rawit: { base_yield_kg_ha: 8000.0, konversi: 1.00, days: 85, varietas: ['Dewata 43', 'Bara', 'Pelita'] },
+  bawang_merah: { base_yield_kg_ha: 10000.0, konversi: 1.00, days: 60, varietas: ['Bima Brebes', 'Tajuk', 'Bauji'] },
+};
+
 export async function handleClientMockRoute(path: string, options: RequestInit = {}): Promise<any> {
   const method = (options.method || 'GET').toUpperCase();
   const cleanPath = path.replace(/^\/api\/v1/, '').replace(/^\/api/, '');
@@ -563,22 +572,46 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
   // 6. Harvest Plans (F7)
   if (cleanPath.startsWith('/harvest-plans')) {
     if (method === 'POST') {
+      const crop = body.komoditas || 'padi';
+      const luas = typeof body.luas_ha === 'number' ? body.luas_ha : parseFloat(body.luas_ha) || 2.0;
+      const spec = CROP_BASE_SPECS[crop] || CROP_BASE_SPECS['padi'];
+      const pupukFactor = body.kondisi_pupuk === 'kurang' ? 0.82 : body.kondisi_pupuk === 'sangat_kurang' ? 0.62 : 1.0;
+      const airFactor = body.sumber_air === 'tadah_hujan' ? 0.90 : 1.04;
+      const effectiveYield = spec.base_yield_kg_ha * spec.konversi * pupukFactor * airFactor;
+      const medVol = Math.round(luas * effectiveYield);
+
+      const baseDate = new Date('2026-11-12');
+      const harvestDays = spec.days;
+      const harvestDate = new Date(baseDate.getTime() + harvestDays * 86400000);
+      const tAwal = new Date(harvestDate.getTime() - 5 * 86400000).toISOString().split('T')[0];
+      const tAkhir = new Date(harvestDate.getTime() + 6 * 86400000).toISOString().split('T')[0];
+
+      const commNamaMap: Record<string, string> = {
+        padi: 'Padi (Beras)',
+        jagung: 'Jagung Pipil',
+        singkong: 'Singkong (Gaplek)',
+        kedelai: 'Kedelai Lokal',
+        cabai_rawit: 'Cabai Rawit',
+        bawang_merah: 'Bawang Merah',
+      };
+
       const newPlan = {
         id: `hp-${Date.now()}`,
-        commodity_id: `c-${body.komoditas || 'padi'}`,
-        commodity_nama: body.komoditas === 'padi' ? 'Padi (Beras)' : body.komoditas,
-        luas_ha: body.luas_ha || 2.0,
-        varietas: body.varietas || 'Unggul Lokal',
+        commodity_id: `c-${crop === 'padi' ? 'beras' : crop}`,
+        commodity_nama: commNamaMap[crop] || crop,
+        luas_ha: luas,
+        varietas: body.varietas || spec.varietas[0],
         kondisi_pupuk: body.kondisi_pupuk || 'cukup',
         sumber_air: body.sumber_air || 'irigasi_teknis',
         tanggal_tanam: '2026-11-12',
         aktif_di_proyeksi: true,
         prediksi: {
-          volume_median_kg: +(body.luas_ha * 3300).toFixed(0),
-          volume_p10_kg: +(body.luas_ha * 2800).toFixed(0),
-          volume_p90_kg: +(body.luas_ha * 3750).toFixed(0),
-          tanggal_panen_awal: '2027-02-15',
-          tanggal_panen_akhir: '2027-02-28',
+          volume_median_kg: medVol,
+          volume_p10_kg: Math.round(medVol * 0.82),
+          volume_p90_kg: Math.round(medVol * 1.18),
+          tanggal_panen_awal: tAwal,
+          tanggal_panen_akhir: tAkhir,
+          tingkat_keyakinan: luas >= 1.0 ? 'tinggi' : 'sedang',
         },
       };
       stateHarvestPlans.push(newPlan);
@@ -586,7 +619,12 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
     }
 
     if (method === 'PATCH') {
-      return { status: 'sukses', pesan: 'Status aktif rencana tanam diperbarui.' };
+      const planId = cleanPath.split('/')[2];
+      const plan = stateHarvestPlans.find((p) => p.id === planId);
+      if (plan) {
+        plan.aktif_di_proyeksi = body.aktif_di_proyeksi !== undefined ? !!body.aktif_di_proyeksi : !plan.aktif_di_proyeksi;
+      }
+      return { status: 'sukses', pesan: 'Status aktif rencana tanam diperbarui.', plan };
     }
 
     return {
@@ -602,64 +640,108 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
 
   // Harvest Forecast
   if (cleanPath.startsWith('/forecast/harvest')) {
-    const luas = body.luas_ha || 2.5;
+    const crop = body.komoditas || 'padi';
+    const luas = typeof body.luas_ha === 'number' ? body.luas_ha : parseFloat(body.luas_ha) || 2.5;
+    const spec = CROP_BASE_SPECS[crop] || CROP_BASE_SPECS['padi'];
+    const pupukFactor = body.kondisi_pupuk === 'kurang' ? 0.82 : body.kondisi_pupuk === 'sangat_kurang' ? 0.62 : 1.0;
+    const airFactor = body.sumber_air === 'tadah_hujan' ? 0.90 : 1.04;
+    const effectiveYield = spec.base_yield_kg_ha * spec.konversi * pupukFactor * airFactor;
+
+    const medVol = Math.round(luas * effectiveYield);
+    const p10Vol = Math.round(medVol * 0.82);
+    const p90Vol = Math.round(medVol * 1.18);
+
+    const baseDate = new Date('2026-11-12');
+    const harvestDays = spec.days + (body.kondisi_pupuk === 'sangat_kurang' ? 8 : body.kondisi_pupuk === 'kurang' ? 4 : 0);
+    const harvestDate = new Date(baseDate.getTime() + harvestDays * 86400000);
+    const tAwal = new Date(harvestDate.getTime() - 5 * 86400000).toISOString().split('T')[0];
+    const tAkhir = new Date(harvestDate.getTime() + 6 * 86400000).toISOString().split('T')[0];
+
+    const pupukKet = body.kondisi_pupuk === 'cukup' ? 'Optimal (Sesuai Dosis RDTK)' : body.kondisi_pupuk === 'kurang' ? 'Terbatas (-18% produktivitas)' : 'Sangat Terbatas (-38% produktivitas)';
+    const airKet = body.sumber_air === 'irigasi_teknis' ? 'Irigasi Teknis Terjamin (+4%)' : 'Tadah Hujan Musiman (-10%)';
+
     return {
-      komoditas: body.komoditas || 'padi',
+      komoditas: crop,
       luas_ha: luas,
-      volume_median_kg: +(luas * 3300).toFixed(1),
-      volume_p10_kg: +(luas * 2800).toFixed(1),
-      volume_p90_kg: +(luas * 3750).toFixed(1),
-      tingkat_keyakinan: 'tinggi',
-      tanggal_panen_awal: '2026-12-15',
-      tanggal_panen_akhir: '2026-12-28',
+      volume_median_kg: medVol,
+      volume_p10_kg: p10Vol,
+      volume_p90_kg: p90Vol,
+      tingkat_keyakinan: luas >= 1.0 ? 'tinggi' : 'sedang',
+      tanggal_panen_awal: tAwal,
+      tanggal_panen_akhir: tAkhir,
       faktor_pengaruh: [
-        { faktor: 'Luas Lahan', nilai: `${luas} ha`, dampak: 'Skala produktivitas optimal', arah: 'positif' },
-        { faktor: 'Kondisi Pupuk', nilai: body.kondisi_pupuk || 'cukup', dampak: 'Menjaga vigor bulir padi', arah: 'positif' },
-        { faktor: 'Sumber Pengairan', nilai: body.sumber_air || 'irigasi_teknis', dampak: 'Ketersediaan air stabil', arah: 'positif' },
+        { faktor: 'Luas Lahan', nilai: `${luas} ha`, dampak: `Potensi panen ${medVol.toLocaleString('id-ID')} kg`, arah: 'positif' },
+        { faktor: 'Kondisi Pupuk', nilai: body.kondisi_pupuk || 'cukup', dampak: pupukKet, arah: body.kondisi_pupuk === 'sangat_kurang' ? 'negatif' : 'positif' },
+        { faktor: 'Sumber Pengairan', nilai: body.sumber_air || 'irigasi_teknis', dampak: airKet, arah: body.sumber_air === 'tadah_hujan' ? 'negatif' : 'positif' },
       ],
     };
   }
 
   // 7. Prices & Global Signals (F8)
   if (cleanPath.startsWith('/prices/')) {
-    const baseP = 14500;
+    const cid = cleanPath.split('/')[2] || 'c-terigu';
+    const comm = stateOverview.komoditas.find((c: any) => c.id === cid || c.kode === cid) || stateOverview.komoditas[3]; // default terigu
+    const baseP = comm.harga_sekarang || 14500;
+
+    // Cek apakah ada event geopolitik aktif yang mendongkrak harga
+    const eventGandumAktif = stateEvents.find((e) => e.id === 'evt-1')?.aktif;
+    const eventPupukAktif = stateEvents.find((e) => e.id === 'evt-2')?.aktif;
+    let multiplier = 1.0;
+    if (eventGandumAktif && comm.kode === 'terigu') multiplier = 1.19;
+    if (eventPupukAktif && (comm.kode === 'beras' || comm.kode === 'jagung')) multiplier = 1.12;
+
+    const curPrice = Math.round(baseP * multiplier);
+    const change7d = multiplier > 1.0 ? +(comm.perubahan_harga_7d_pct + 18.5).toFixed(1) : comm.perubahan_harga_7d_pct;
+
     const series104 = [];
     const baseDate = new Date('2024-11-15');
+    const volFactor = comm.kode === 'cabai_rawit' ? 0.25 : comm.kode === 'bawang_merah' ? 0.20 : comm.kode === 'terigu' ? 0.12 : 0.08;
     for (let w = 1; w <= 104; w++) {
       const dt = new Date(baseDate.getTime() + w * 7 * 86400000);
+      const priceW = Math.round(baseP * (1.0 + volFactor * Math.sin(w / 7) + (w / 104) * 0.05));
       series104.push({
         tanggal: dt.toISOString().split('T')[0],
         minggu_ke: w,
-        harga: Math.round(baseP * (0.92 + 0.12 * Math.sin(w / 8))),
+        harga: priceW,
       });
     }
+
+    const predPct = +(1.2 + (multiplier - 1.0) * 10).toFixed(1);
+    const cv = comm.kode === 'cabai_rawit' ? 18.4 : comm.kode === 'bawang_merah' ? 14.2 : comm.kode === 'terigu' ? 8.1 : 3.4;
+    const volText = cv > 12 ? 'Tinggi' : cv > 6 ? 'Sedang' : 'Rendah';
+
     return {
-      kode: 'beras',
-      nama: 'Beras',
-      satuan: 'kg',
-      harga_sekarang: baseP,
-      perubahan_7d_pct: 0.8,
-      prediksi_4w_pct: 1.4,
-      volatilitas: 'Rendah',
-      koefisien_variasi_pct: 3.2,
+      id: comm.id,
+      kode: comm.kode,
+      nama: comm.nama,
+      satuan: comm.satuan,
+      harga_sekarang: curPrice,
+      perubahan_7d_pct: change7d,
+      prediksi_4w_pct: predPct,
+      volatilitas: volText,
+      koefisien_variasi_pct: cv,
       metode_model: 'Holt-Winters ExponentialSmoothing',
       riwayat_104_minggu: series104,
       prediksi_4_minggu: [
-        { minggu_ke_depan: 1, harga_prediksi: 14550, batas_atas_80: 14800, batas_bawah_80: 14300 },
-        { minggu_ke_depan: 2, harga_prediksi: 14600, batas_atas_80: 14950, batas_bawah_80: 14250 },
-        { minggu_ke_depan: 3, harga_prediksi: 14650, batas_atas_80: 15100, batas_bawah_80: 14200 },
-        { minggu_ke_depan: 4, harga_prediksi: 14700, batas_atas_80: 15250, batas_bawah_80: 14150 },
+        { minggu_ke_depan: 1, harga_prediksi: Math.round(curPrice * 1.01), batas_atas_80: Math.round(curPrice * 1.04), batas_bawah_80: Math.round(curPrice * 0.98) },
+        { minggu_ke_depan: 2, harga_prediksi: Math.round(curPrice * 1.02), batas_atas_80: Math.round(curPrice * 1.06), batas_bawah_80: Math.round(curPrice * 0.97) },
+        { minggu_ke_depan: 3, harga_prediksi: Math.round(curPrice * 1.03), batas_atas_80: Math.round(curPrice * 1.08), batas_bawah_80: Math.round(curPrice * 0.96) },
+        { minggu_ke_depan: 4, harga_prediksi: Math.round(curPrice * 1.04), batas_atas_80: Math.round(curPrice * 1.10), batas_bawah_80: Math.round(curPrice * 0.95) },
       ],
     };
   }
 
   if (cleanPath.startsWith('/global/signals')) {
+    const eventGandumAktif = stateEvents.find((e) => e.id === 'evt-1')?.aktif;
+    const eventPupukAktif = stateEvents.find((e) => e.id === 'evt-2')?.aktif;
+    const skorEksposur = eventGandumAktif || eventPupukAktif ? 28.5 : 14.2;
+
     return {
-      skor_eksposur_global: 14.2,
+      skor_eksposur_global: skorEksposur,
       sinyal: [
-        { kode: 'kurs_usd_idr', nama: 'Kurs USD/IDR', nilai: 16400, satuan: 'Rp', perubahan_14d_pct: 0.4, komoditas_terpapar: ['Terigu', 'Kedelai', 'Minyak'] },
-        { kode: 'harga_pupuk_urea', nama: 'Harga Pupuk Urea', nilai: 420, satuan: 'USD/ton', perubahan_14d_pct: 1.5, komoditas_terpapar: ['Padi', 'Jagung'] },
-        { kode: 'indeks_pangan_fao', nama: 'Indeks Pangan Dunia (FAO)', nilai: 125, satuan: 'poin', perubahan_14d_pct: 1.2, komoditas_terpapar: ['Terigu', 'Gula'] },
+        { kode: 'kurs_usd_idr', nama: 'Kurs USD/IDR', nilai: eventGandumAktif ? 16750 : 16400, satuan: 'Rp', perubahan_14d_pct: eventGandumAktif ? 2.8 : 0.4, komoditas_terpapar: ['Terigu', 'Kedelai', 'Minyak'] },
+        { kode: 'harga_pupuk_urea', nama: 'Harga Pupuk Urea', nilai: eventPupukAktif ? 520 : 420, satuan: 'USD/ton', perubahan_14d_pct: eventPupukAktif ? 23.8 : 1.5, komoditas_terpapar: ['Padi', 'Jagung'] },
+        { kode: 'indeks_pangan_fao', nama: 'Indeks Pangan Dunia (FAO)', nilai: eventGandumAktif ? 138 : 125, satuan: 'poin', perubahan_14d_pct: eventGandumAktif ? 10.4 : 1.2, komoditas_terpapar: ['Terigu', 'Gula'] },
       ],
     };
   }

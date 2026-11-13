@@ -347,14 +347,35 @@ let stateMyTransfers: Array<any> = [
     dari_village_id: 'v-karangsari',
     dari_village_nama: 'Desa Karangsari',
     ke_village_id: 'v-sidomulyo',
-    ke_village_nama: 'Desa Sidomulyo',
+    ke_village_nama: 'Desa Sidomulyo (Kita)',
     commodity_id: 'c-kedelai',
     commodity_nama: 'Kedelai',
     satuan: 'kg',
     jumlah: 350.0,
+    jarak_km: 4.2,
+    biaya_angkut: 44100,
     status: 'Diajukan',
     draf_pesan: 'Mohon dukungan pasokan cadangan kedelai 350 kg untuk pemenuhan gizi balita Sidomulyo.',
     created_at: '2026-11-12T08:30:00',
+  },
+];
+
+let stateIncomingTransfers: Array<any> = [
+  {
+    id: 'trf-in-1',
+    dari_village_id: 'v-sidomulyo',
+    dari_village_nama: 'Desa Sidomulyo (Kita)',
+    ke_village_id: 'v-sukomakmur',
+    ke_village_nama: 'Desa Sukomakmur',
+    commodity_id: 'c-beras',
+    commodity_nama: 'Beras',
+    satuan: 'kg',
+    jumlah: 500.0,
+    status: 'Diajukan',
+    draf_pesan: 'Permohonan bantuan darurat cadangan beras 500 kg dari Lumbung Desa Sidomulyo untuk menangani defisit pangan 35 KK rentan di Dusun Krajan Sukomakmur.',
+    doc_desa_kita_sebelum: 38.0,
+    doc_desa_kita_sesudah: 36.9,
+    aman_untuk_disetujui: true,
   },
 ];
 
@@ -395,6 +416,61 @@ const CROP_BASE_SPECS: Record<string, { base_yield_kg_ha: number; konversi: numb
   cabai_rawit: { base_yield_kg_ha: 8000.0, konversi: 1.00, days: 85, varietas: ['Dewata 43', 'Bara', 'Pelita'] },
   bawang_merah: { base_yield_kg_ha: 10000.0, konversi: 1.00, days: 60, varietas: ['Bima Brebes', 'Tajuk', 'Bauji'] },
 };
+
+function recalculateOverviewSummary(): void {
+  const targetHari = stateOverview.target_hari || 30;
+
+  // 1. Update komoditas
+  stateOverview.komoditas.forEach((c: any) => {
+    c.hari_bertahan = +(c.stok_efektif / c.kebutuhan_harian).toFixed(1);
+    c.status = c.hari_bertahan >= 21 ? 'Aman' : c.hari_bertahan >= 14 ? 'Waspada' : c.hari_bertahan >= 7 ? 'Siaga' : 'Kritis';
+    c.level = c.status.toLowerCase();
+    c.bawah_72_jam = c.hari_bertahan < 3.0;
+    c.progress_target_pct = Math.min(100, Math.round((c.hari_bertahan / targetHari) * 100));
+  });
+
+  // 2. Pool pokok
+  const pokokComms = stateOverview.komoditas.filter((c: any) => c.kelompok === 'pokok');
+  const totalStokPokok = pokokComms.reduce((acc: number, c: any) => acc + c.stok_efektif, 0);
+  const totalKebutuhanPokok = pokokComms.reduce((acc: number, c: any) => acc + c.kebutuhan_harian, 0);
+  const pokokDays = +(totalStokPokok / totalKebutuhanPokok).toFixed(1);
+  stateOverview.pool_pokok = {
+    hari_bertahan: pokokDays,
+    status: pokokDays >= 21 ? 'Aman' : pokokDays >= 14 ? 'Waspada' : 'Siaga',
+    level: pokokDays >= 21 ? 'aman' : pokokDays >= 14 ? 'waspada' : 'siaga',
+    bawah_72_jam: pokokDays < 3.0,
+    progress_target_pct: Math.min(100, Math.round((pokokDays / targetHari) * 100)),
+  };
+
+  // 3. Pool protein
+  const proteinComms = stateOverview.komoditas.filter((c: any) => c.kelompok === 'protein');
+  const totalStokProt = proteinComms.reduce((acc: number, c: any) => acc + c.stok_efektif, 0);
+  const totalKebutuhanProt = proteinComms.reduce((acc: number, c: any) => acc + c.kebutuhan_harian, 0);
+  const protDays = +(totalStokProt / totalKebutuhanProt).toFixed(1);
+  stateOverview.pool_protein = {
+    hari_bertahan: protDays,
+    status: protDays >= 21 ? 'Aman' : protDays >= 14 ? 'Waspada' : 'Siaga',
+    level: protDays >= 21 ? 'aman' : protDays >= 14 ? 'waspada' : 'siaga',
+    bawah_72_jam: protDays < 3.0,
+    progress_target_pct: Math.min(100, Math.round((protDays / targetHari) * 100)),
+  };
+
+  // 4. Titik terlemah
+  const sorted = [...stateOverview.komoditas].sort((a: any, b: any) => a.hari_bertahan - b.hari_bertahan);
+  const weakest = sorted[0];
+  stateOverview.titik_terlemah = {
+    commodity_id: weakest.id,
+    kode: weakest.kode,
+    nama: weakest.nama,
+    hari_bertahan: weakest.hari_bertahan,
+    status: weakest.status,
+    level: weakest.level,
+    bawah_72_jam: weakest.bawah_72_jam,
+    progress_target_pct: weakest.progress_target_pct,
+  };
+
+  stateOverview.kalimat_ringkasan = `Jika pasokan dari luar berhenti, pangan pokok desa bertahan ${stateOverview.pool_pokok.hari_bertahan} hari. Titik terlemah: ${weakest.nama} (${weakest.hari_bertahan} hari).`;
+}
 
 export async function handleClientMockRoute(path: string, options: RequestInit = {}): Promise<any> {
   const method = (options.method || 'GET').toUpperCase();
@@ -968,140 +1044,449 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
 
   // 9. Nutrition & PMT Menu Generator (F9)
   if (cleanPath.startsWith('/menus/generate')) {
-    const penerima = body.sasaran === 'balita' ? 140 : body.sasaran === 'ibu_hamil' ? 45 : 1800;
-    const durasi = body.durasi || 7;
-    const sampleMenus = [
-      { nama: 'Nasi Jagung + Tempe Bacem + Sup Bayam Kelor', energi: 420, protein: 8.5, biaya: 5800 },
-      { nama: 'Ubi Kukus Gurih + Telur Dadar Daun Kelor + Bening Labu', energi: 410, protein: 8.2, biaya: 6100 },
-      { nama: 'Singkong Mocaf + Bakso Lele Lokal + Tumis Kangkung', energi: 415, protein: 8.4, biaya: 6200 },
-      { nama: 'Nasi Merah + Orek Tempe Manis + Sayur Katuk Jagung', energi: 405, protein: 7.9, biaya: 5700 },
-      { nama: 'Bubur Jagung Manis + Tahu Sutra Kukus + Sari Kacang Hijau', energi: 412, protein: 8.1, biaya: 5900 },
-      { nama: 'Pure Ubi Ungu + Pepes Ikan Nila Desa + Sayur Bening Bayam', energi: 425, protein: 8.6, biaya: 6300 },
-      { nama: 'Tiwul Singkong Manis + Botok Tempe Tahu Kelapa Muda', energi: 402, protein: 7.8, biaya: 5650 },
+    const sasaran = body.sasaran || 'balita';
+    const durasi = typeof body.durasi === 'number' ? Math.max(1, Math.min(14, body.durasi)) : 7;
+    const prioritas = body.prioritas || 'hindari_impor';
+    const batasStokPct = typeof body.batas_stok_pct === 'number' ? body.batas_stok_pct : 0.20;
+
+    let targetEnergi = 405;
+    let targetProtein = 6.0;
+    let defaultPenerima = 140;
+    let labelSasaran = 'Balita (PMT Posyandu 30% AKG)';
+
+    if (sasaran === 'ibu_hamil') {
+      targetEnergi = 750;
+      targetProtein = 21.0;
+      defaultPenerima = 45;
+      labelSasaran = 'Ibu Hamil & Menyusui (PMT 30% AKG)';
+    } else if (sasaran === 'umum') {
+      targetEnergi = 2100;
+      targetProtein = 57.0;
+      defaultPenerima = 1800;
+      labelSasaran = 'Warga Umum / Dapur Umum (100% AKG)';
+    }
+
+    const penerima = defaultPenerima;
+
+    // Menu database tailored per target group
+    const menuTemplatesBalita = [
+      {
+        nama: 'Nasi Jagung Pulen + Tempe Bacem Halus + Sayur Bayam Kelor',
+        bahan: [
+          { food_id: 'b-jagung', nama: 'Jagung Pipil Lokal', kategori: 'karbohidrat', status_stok: 'stok_desa', g: 50, kkal: 180, prot: 2.2, rp: 410 },
+          { food_id: 'b-beras', nama: 'Beras Lumbung', kategori: 'karbohidrat', status_stok: 'stok_desa', g: 25, kkal: 90, prot: 1.8, rp: 360 },
+          { food_id: 'b-tempe', nama: 'Tempe Kedelai Lokal', kategori: 'protein_nabati', status_stok: 'stok_desa', g: 35, kkal: 70, prot: 4.2, rp: 500 },
+          { food_id: 'b-bayam', nama: 'Sayur Hijau (Bayam & Kelor)', kategori: 'sayur', status_stok: 'perlu_dibeli', g: 30, kkal: 25, prot: 0.8, rp: 450 },
+          { food_id: 'b-minyak', nama: 'Minyak Kelapa Curah', kategori: 'pelengkap', status_stok: 'stok_desa', g: 5, kkal: 45, prot: 0.0, rp: 80 },
+        ],
+        langkah: [
+          'Cuci bersih jagung pipil dan beras, masak bersama hingga menjadi nasi jagung aron yang lembut.',
+          'Rebus tempe lokal dengan bumbu bacem tradisional (gula merah desa & ketumbar) hingga meresap.',
+          'Rebus daun bayam dan kelor sebentar (3 menit) dalam kuah bening agar nutrisi vitamin tetap utuh.',
+          'Sajikan hangat dengan porsi takaran mangkuk balita 200 gram.',
+        ],
+        tips: 'Tekstur nasi jagung dibuat lumat halus agar mudah dikunyah balita usia 12–24 bulan.',
+      },
+      {
+        nama: 'Pure Ubi Ungu Lembut + Bakso Lele Lokal + Kuah Labu Bening',
+        bahan: [
+          { food_id: 'b-ubi', nama: 'Ubi Jalar / Ungu Lokal', kategori: 'karbohidrat', status_stok: 'stok_desa', g: 75, kkal: 175, prot: 1.5, rp: 450 },
+          { food_id: 'b-lele', nama: 'Ikan Lele Segar Kolam Desa', kategori: 'protein_hewani', status_stok: 'perlu_dibeli', g: 40, kkal: 105, prot: 4.8, rp: 1200 },
+          { food_id: 'b-labu', nama: 'Labu Kuning & Wortel', kategori: 'sayur', status_stok: 'perlu_dibeli', g: 30, kkal: 30, prot: 0.7, rp: 400 },
+          { food_id: 'b-telur', nama: 'Telur Ayam Ras', kategori: 'protein_hewani', status_stok: 'stok_desa', g: 15, kkal: 25, prot: 1.8, rp: 420 },
+          { food_id: 'b-minyak', nama: 'Minyak Nabati', kategori: 'pelengkap', status_stok: 'stok_desa', g: 6, kkal: 54, prot: 0.0, rp: 95 },
+        ],
+        langkah: [
+          'Kukus ubi jalar hingga empuk, haluskan dengan sedikit santan encer/air matang.',
+          'Giling fillet lele lokal dengan sedikit putih telur, bentuk bola bakso kecil dan rebus hingga mengapung.',
+          'Masak kuah bening labu kuning dengan kaldu alami daun bawang seledri.',
+          'Tata bakso lele di atas pure ubi ungu hangat, siram kuah labu.',
+        ],
+        tips: 'Kaya beta-karoten dan asam lemak omega untuk daya tahan tubuh dan tumbuh kembang anak.',
+      },
+      {
+        nama: 'Singkong Keju Mocaf + Telur Dadar Daun Kelor + Sari Wortel',
+        bahan: [
+          { food_id: 'b-singkong', nama: 'Singkong / Tepung Mocaf Lokal', kategori: 'karbohidrat', status_stok: 'stok_desa', g: 60, kkal: 190, prot: 1.2, rp: 360 },
+          { food_id: 'b-telur', nama: 'Telur Ayam Ras Lumbung', kategori: 'protein_hewani', status_stok: 'stok_desa', g: 40, kkal: 65, prot: 5.0, rp: 1120 },
+          { food_id: 'b-kelor', nama: 'Daun Kelor Kebun Gizi', kategori: 'sayur', status_stok: 'perlu_dibeli', g: 20, kkal: 20, prot: 1.2, rp: 250 },
+          { food_id: 'b-wortel', nama: 'Wortel Manis Lokal', kategori: 'buah', status_stok: 'perlu_dibeli', g: 25, kkal: 25, prot: 0.4, rp: 350 },
+          { food_id: 'b-minyak', nama: 'Minyak Kelapa Curah', kategori: 'pelengkap', status_stok: 'stok_desa', g: 8, kkal: 72, prot: 0.0, rp: 130 },
+        ],
+        langkah: [
+          'Kukus singkong pulen lokal, taburkan sedikit keju parut gurih.',
+          'Kocok telur bersama irisan halus daun kelor segar dan sedikit garam.',
+          'Dadar telur dengan api kecil menggunakan sedikit minyak lumbung hingga matang kecokelatan.',
+          'Sajikan bersama potongan wortel rebus empuk.',
+        ],
+        tips: '100% bebas terigu impor, sangat kaya zat besi dan asam amino esensial dari daun kelor.',
+      },
+      {
+        nama: 'Bubur Jagung Manis Gurih + Tahu Sutra Kukus + Sari Kacang Hijau',
+        bahan: [
+          { food_id: 'b-jagung', nama: 'Jagung Pipil Manis Lokal', kategori: 'karbohidrat', status_stok: 'stok_desa', g: 65, kkal: 210, prot: 2.8, rp: 530 },
+          { food_id: 'b-tahu', nama: 'Tahu Putih Lembut Desa', kategori: 'protein_nabati', status_stok: 'stok_desa', g: 45, kkal: 75, prot: 4.5, rp: 450 },
+          { food_id: 'b-kacang', nama: 'Kacang Hijau Kebun Desa', kategori: 'protein_nabati', status_stok: 'perlu_dibeli', g: 20, kkal: 65, prot: 2.2, rp: 500 },
+          { food_id: 'b-labu', nama: 'Labu Siam Muda', kategori: 'sayur', status_stok: 'perlu_dibeli', g: 25, kkal: 18, prot: 0.5, rp: 250 },
+          { food_id: 'b-minyak', nama: 'Minyak Curah', kategori: 'pelengkap', status_stok: 'stok_desa', g: 5, kkal: 45, prot: 0.0, rp: 80 },
+        ],
+        langkah: [
+          'Pipil jagung manis, blender kasar lalu masak bersama air kaldu hingga menjadi bubur kental.',
+          'Kukus tahu putih yang dipotong dadu mini dengan sedikit taburan bawang putih cincang.',
+          'Rebus kacang hijau hingga pecah merekah sebagai pendamping nutrisi serat.',
+          'Campurkan seluruh komponen dalam wadah porsi higienis.',
+        ],
+        tips: 'Kombinasi protein ganda nabati tinggi kalsium dan mudah dicerna usus balita.',
+      },
+      {
+        nama: 'Nasi Tim Beras Merah + Botok Ikan Nila Desa + Sayur Bayam',
+        bahan: [
+          { food_id: 'b-beras', nama: 'Beras Merah Lokal', kategori: 'karbohidrat', status_stok: 'stok_desa', g: 45, kkal: 160, prot: 3.2, rp: 650 },
+          { food_id: 'b-nila', nama: 'Ikan Nila Segar Peternak Desa', kategori: 'protein_hewani', status_stok: 'perlu_dibeli', g: 40, kkal: 110, prot: 5.2, rp: 1300 },
+          { food_id: 'b-kelapa', nama: 'Kelapa Parut Muda', kategori: 'pelengkap', status_stok: 'perlu_dibeli', g: 15, kkal: 55, prot: 0.5, rp: 200 },
+          { food_id: 'b-bayam', nama: 'Daun Bayam Hijau', kategori: 'sayur', status_stok: 'perlu_dibeli', g: 30, kkal: 25, prot: 0.9, rp: 400 },
+          { food_id: 'b-minyak', nama: 'Minyak Nabati', kategori: 'pelengkap', status_stok: 'stok_desa', g: 6, kkal: 54, prot: 0.0, rp: 95 },
+        ],
+        langkah: [
+          'Masak beras merah lokal dengan teknik tim hingga pulen lembut berair.',
+          'Campur cincangan ikan nila dengan parutan kelapa muda dan bumbu botok tanpa cabai.',
+          'Bungkus botok dalam daun pisang dan kukus selama 25 menit.',
+          'Rebus daun bayam segar sebentar sebagai pelengkap serat alami.',
+        ],
+        tips: 'Aroma daun pisang menggugah nafsu makan anak tanpa memerlukan bahan pengawet sintetis.',
+      },
+      {
+        nama: 'Pure Ubi Jalar Madu + Orek Tempe Lembut + Sup Kaldu Labu',
+        bahan: [
+          { food_id: 'b-ubi', nama: 'Ubi Jalar Madu Lokal', kategori: 'karbohidrat', status_stok: 'stok_desa', g: 70, kkal: 180, prot: 1.4, rp: 420 },
+          { food_id: 'b-tempe', nama: 'Tempe Kedelai Lumbung', kategori: 'protein_nabati', status_stok: 'stok_desa', g: 40, kkal: 80, prot: 4.8, rp: 560 },
+          { food_id: 'b-telur', nama: 'Telur Ayam Ras', kategori: 'protein_hewani', status_stok: 'stok_desa', g: 20, kkal: 32, prot: 2.2, rp: 560 },
+          { food_id: 'b-labu', nama: 'Labu Siam & Tomat', kategori: 'sayur', status_stok: 'perlu_dibeli', g: 30, kkal: 20, prot: 0.6, rp: 350 },
+          { food_id: 'b-minyak', nama: 'Minyak Kelapa', kategori: 'pelengkap', status_stok: 'stok_desa', g: 7, kkal: 63, prot: 0.0, rp: 110 },
+        ],
+        langkah: [
+          'Kukus ubi jalar madu lalu tumbuk dengan sendok hingga bertekstur bubur kental lembut.',
+          'Potong tempe dadu sangat kecil, tumis sebentar dengan sedikit kecap manis dan air.',
+          'Orak-arik telur dengan sedikit mentega/minyak hingga lembut bercampur.',
+          'Sajikan hangat bersama kuah kaldu sayur bening.',
+        ],
+        tips: 'Rasa manis alami dari ubi madu disukai balita tanpa memerlukan tambahan gula pasir.',
+      },
+      {
+        nama: 'Tiwul Manis Kukus + Telur Puyuh Rebus + Sayur Bening Kelor',
+        bahan: [
+          { food_id: 'b-singkong', nama: 'Tiwul Singkong Gaplek Lokal', kategori: 'karbohidrat', status_stok: 'stok_desa', g: 55, kkal: 185, prot: 1.1, rp: 330 },
+          { food_id: 'b-telur-puyuh', nama: 'Telur Puyuh Rebus Desa', kategori: 'protein_hewani', status_stok: 'perlu_dibeli', g: 30, kkal: 75, prot: 4.6, rp: 1200 },
+          { food_id: 'b-tahu', nama: 'Tahu Putih Kukus', kategori: 'protein_nabati', status_stok: 'stok_desa', g: 30, kkal: 50, prot: 3.0, rp: 300 },
+          { food_id: 'b-kelor', nama: 'Daun Kelor Segar', kategori: 'sayur', status_stok: 'perlu_dibeli', g: 25, kkal: 25, prot: 1.4, rp: 300 },
+          { food_id: 'b-minyak', nama: 'Minyak Curah', kategori: 'pelengkap', status_stok: 'stok_desa', g: 6, kkal: 54, prot: 0.0, rp: 95 },
+        ],
+        langkah: [
+          'Percikkan sedikit air pada tepung tiwul gaplek, kukus hingga harum pulen.',
+          'Kupas telur puyuh rebus dan belah dua agar aman dikunyah anak.',
+          'Kukus tahu putih dengan sedikit garam dan irisan seledri.',
+          'Rebus daun kelor sebentar dalam air mendidih.',
+        ],
+        tips: 'Warisan pangan lokal berdaya tahan tinggi dengan indeks glikemik rendah dan padat gizi mikro.',
+      },
     ];
 
-    const daysPlan = [];
+    const menuTemplatesIbuHamil = [
+      {
+        nama: 'Nasi Jagung Pulen + Pepes Ikan Nila Segar + Sayur Katuk Bening + Telur Rebus',
+        bahan: [
+          { food_id: 'b-jagung', nama: 'Jagung Pipil Lokal', kategori: 'karbohidrat', status_stok: 'stok_desa', g: 90, kkal: 320, prot: 4.0, rp: 740 },
+          { food_id: 'b-nila', nama: 'Ikan Nila Kolam Desa', kategori: 'protein_hewani', status_stok: 'perlu_dibeli', g: 80, kkal: 190, prot: 11.5, rp: 2600 },
+          { food_id: 'b-telur', nama: 'Telur Ayam Ras Lumbung', kategori: 'protein_hewani', status_stok: 'stok_desa', g: 50, kkal: 80, prot: 6.3, rp: 1400 },
+          { food_id: 'b-katuk', nama: 'Daun Katuk & Jagung Manis', kategori: 'sayur', status_stok: 'perlu_dibeli', g: 50, kkal: 45, prot: 2.1, rp: 700 },
+          { food_id: 'b-minyak', nama: 'Minyak Nabati Curah', kategori: 'pelengkap', status_stok: 'stok_desa', g: 12, kkal: 108, prot: 0.0, rp: 190 },
+        ],
+        langkah: [
+          'Masak nasi jagung campuran beras lumbung hingga matang pulen.',
+          'Bumbui ikan nila dengan kunyit, kemiri, serai, bungkus daun pisang dan kukus 30 menit.',
+          'Rebus telur ayam hingga matang sempurna (hard-boiled) demi keamanan konsumsi bumil.',
+          'Masak sayur bening daun katuk untuk laktasi ASI optimal.',
+        ],
+        tips: 'Tinggi asam folat, zat besi, dan kalsium alami untuk mencegah anemia pada ibu hamil.',
+      },
+      {
+        nama: 'Nasi Merah Pulen + Ayam Ungkep Kuning + Sayur Daun Kelor + Orek Tempe',
+        bahan: [
+          { food_id: 'b-beras', nama: 'Beras Merah Desa', kategori: 'karbohidrat', status_stok: 'stok_desa', g: 85, kkal: 300, prot: 6.0, rp: 1250 },
+          { food_id: 'b-ayam', nama: 'Daging Ayam Kampung', kategori: 'protein_hewani', status_stok: 'perlu_dibeli', g: 75, kkal: 185, prot: 12.0, rp: 3200 },
+          { food_id: 'b-tempe', nama: 'Tempe Kedelai Lokal', kategori: 'protein_nabati', status_stok: 'stok_desa', g: 45, kkal: 90, prot: 5.4, rp: 630 },
+          { food_id: 'b-kelor', nama: 'Daun Kelor & Wortel', kategori: 'sayur', status_stok: 'perlu_dibeli', g: 50, kkal: 45, prot: 2.2, rp: 650 },
+          { food_id: 'b-minyak', nama: 'Minyak Goreng Curah', kategori: 'pelengkap', status_stok: 'stok_desa', g: 14, kkal: 126, prot: 0.0, rp: 220 },
+        ],
+        langkah: [
+          'Tanak beras merah lokal hingga pulen dan empuk.',
+          'Ungkep ayam kampung dengan rempah kunyit lengkuas hingga empuk meresap.',
+          'Tumis orek tempe manis gurih menggunakan sedikit minyak sawit.',
+          'Rebus kuah bening daun kelor dan wortel segar.',
+        ],
+        tips: 'Mendukung cadangan zat besi dan mencegah risiko BBLR pada janin.',
+      },
+    ];
+
+    const menuTemplatesUmum = [
+      {
+        nama: 'Nasi Beras & Jagung Campur + Sayur Lodeh Tahu Tempe + Ikan Goreng Crispy',
+        bahan: [
+          { food_id: 'b-beras', nama: 'Beras Lumbung Pangan', kategori: 'karbohidrat', status_stok: 'stok_desa', g: 150, kkal: 540, prot: 10.8, rp: 2175 },
+          { food_id: 'b-jagung', nama: 'Jagung Pipil Lokal', kategori: 'karbohidrat', status_stok: 'stok_desa', g: 60, kkal: 215, prot: 2.7, rp: 490 },
+          { food_id: 'b-ikan', nama: 'Ikan Air Tawar Kolam Desa', kategori: 'protein_hewani', status_stok: 'perlu_dibeli', g: 100, kkal: 220, prot: 18.0, rp: 3500 },
+          { food_id: 'b-tempe', nama: 'Tempe & Tahu Kedelai', kategori: 'protein_nabati', status_stok: 'stok_desa', g: 80, kkal: 160, prot: 9.6, rp: 1120 },
+          { food_id: 'b-lodeh', nama: 'Sayur Labu Kacang Panjang', kategori: 'sayur', status_stok: 'perlu_dibeli', g: 75, kkal: 65, prot: 2.4, rp: 900 },
+          { food_id: 'b-minyak', nama: 'Minyak Sawit Curah', kategori: 'pelengkap', status_stok: 'stok_desa', g: 20, kkal: 180, prot: 0.0, rp: 320 },
+        ],
+        langkah: [
+          'Masak nasi campur beras dan jagung dalam dandang besar dapur umum.',
+          'Goreng ikan air tawar bumbu ketumbar hingga renyah garing.',
+          'Rebus sayur lodeh santan encer dengan tahu dan tempe dadu.',
+          'Distribusikan per porsi dengan takaran centong standar dapur desa.',
+        ],
+        tips: 'Format porsi dapur umum warga mampu menjaga stamina tenaga kerja dan logistik desa.',
+      },
+    ];
+
+    const sourceTemplates = sasaran === 'balita'
+      ? menuTemplatesBalita
+      : sasaran === 'ibu_hamil'
+      ? menuTemplatesIbuHamil
+      : menuTemplatesUmum;
+
+    const daysPlan: any[] = [];
+    let totalBiayaSeluruhHari = 0;
+    const trackedUsageKg: Record<string, number> = {
+      'c-jagung': 0,
+      'c-singkong': 0,
+      'c-telur': 0,
+      'c-minyak': 0,
+      'c-kedelai': 0,
+    };
+
     for (let d = 1; d <= durasi; d++) {
-      const sm = sampleMenus[(d - 1) % sampleMenus.length];
+      const tmpl = sourceTemplates[(d - 1) % sourceTemplates.length];
+      let dayEnergi = 0;
+      let dayProtein = 0;
+      let dayCostPerPorsi = 0;
+
+      const items = tmpl.bahan.map((b) => {
+        const totalKg = +((b.g * penerima) / 1000).toFixed(2);
+        dayEnergi += b.kkal;
+        dayProtein += b.prot;
+        dayCostPerPorsi += b.rp;
+
+        if (b.food_id === 'b-jagung') trackedUsageKg['c-jagung'] += totalKg;
+        if (b.food_id === 'b-singkong' || b.food_id === 'b-ubi') trackedUsageKg['c-singkong'] += totalKg;
+        if (b.food_id === 'b-telur') trackedUsageKg['c-telur'] += totalKg;
+        if (b.food_id === 'b-minyak') trackedUsageKg['c-minyak'] += totalKg;
+        if (b.food_id === 'b-tempe' || b.food_id === 'b-tahu') trackedUsageKg['c-kedelai'] += +(totalKg * 0.6).toFixed(2);
+
+        return {
+          food_id: b.food_id,
+          nama: b.nama,
+          kategori: b.kategori,
+          status_stok: b.status_stok,
+          gram_per_porsi: b.g,
+          total_kebutuhan_kg: totalKg,
+          energi_kkal: b.kkal,
+          protein_g: b.prot,
+          biaya_per_porsi_rp: b.rp,
+        };
+      });
+
+      const dayTotalCost = Math.round(dayCostPerPorsi * penerima);
+      totalBiayaSeluruhHari += dayTotalCost;
+
       daysPlan.push({
         hari: d,
-        nama_menu: sm.nama,
-        biaya_per_porsi_rp: sm.biaya,
-        energi_per_porsi_kkal: sm.energi,
-        protein_per_porsi_g: sm.protein,
-        persen_energi: Math.round((sm.energi / 400) * 100),
-        persen_protein: Math.round((sm.protein / 6.0) * 100),
-        bahan: [
-          { food_id: 'b-jagung', nama: 'Jagung Pipil Lokal', sumber: 'Lumbung Desa', gram_per_porsi: 60, total_kg: +(0.06 * penerima).toFixed(1), energi_kkal: 210, protein_g: 2.5, biaya_rp: 600 },
-          { food_id: 'b-tempe', nama: 'Tempe / Kedelai Lokal', sumber: 'Pengrajin Desa', gram_per_porsi: 45, total_kg: +(0.045 * penerima).toFixed(1), energi_kkal: 120, protein_g: 4.8, biaya_rp: 1800 },
-          { food_id: 'b-sayur', nama: 'Sayur Hijau (Bayam/Kelor)', sumber: 'Kebun Gizi', gram_per_porsi: 40, total_kg: +(0.04 * penerima).toFixed(1), energi_kkal: 35, protein_g: 0.9, biaya_rp: 1200 },
-          { food_id: 'b-minyak', nama: 'Minyak Goreng Curah', sumber: 'Stok Desa', gram_per_porsi: 5, total_kg: +(0.005 * penerima).toFixed(1), energi_kkal: 45, protein_g: 0.0, biaya_rp: 400 },
-        ],
+        nama_menu: tmpl.nama,
+        bahan: items,
+        energi_per_porsi_kkal: +dayEnergi.toFixed(1),
+        target_energi_kkal: targetEnergi,
+        persen_energi: Math.round((dayEnergi / targetEnergi) * 100),
+        protein_per_porsi_g: +dayProtein.toFixed(1),
+        target_protein_g: targetProtein,
+        persen_protein: Math.round((dayProtein / targetProtein) * 100),
+        biaya_per_porsi_rp: Math.round(dayCostPerPorsi),
+        biaya_harian_total_rp: dayTotalCost,
+        langkah_masak: tmpl.langkah,
+        tips_penyajian: tmpl.tips,
       });
     }
 
-    return {
+    // Impact on village commodity stocks
+    const dampakStok: any[] = [];
+    const commNameMap: Record<string, string> = {
+      'c-jagung': 'Jagung pipil kering',
+      'c-singkong': 'Singkong kering/gaplek',
+      'c-telur': 'Telur ayam ras',
+      'c-minyak': 'Minyak goreng curah',
+      'c-kedelai': 'Kedelai',
+    };
+
+    Object.entries(trackedUsageKg).forEach(([cid, usedKg]) => {
+      const comm = stateOverview.komoditas.find((c: any) => c.id === cid);
+      if (comm && usedKg > 0) {
+        const sAwal = comm.stok_efektif;
+        const dHarian = comm.kebutuhan_harian;
+        const sSisa = Math.max(0, sAwal - usedKg);
+        const docSebelum = +(sAwal / dHarian).toFixed(1);
+        const docSesudah = +(sSisa / dHarian).toFixed(1);
+        const alokasiMaks = +(sAwal * batasStokPct).toFixed(1);
+
+        dampakStok.push({
+          commodity_id: cid,
+          nama: commNameMap[cid] || comm.nama,
+          terpakai_kg: +usedKg.toFixed(1),
+          alokasi_maks_kg: alokasiMaks,
+          stok_awal_kg: sAwal,
+          stok_sisa_kg: +sSisa.toFixed(1),
+          doc_sebelum: docSebelum,
+          doc_sesudah: docSesudah,
+        });
+      }
+    });
+
+    const substitusiList = [
+      '100% Bebas Terigu Impor: Olahan karbohidrat menggunakan Singkong (Mocaf), Ubi Jalar, dan Jagung Pipil lokal Desa Sidomulyo.',
+      'Substitusi Protein Mandiri: Mengutamakan Telur ayam peternak lokal, Ikan Lele kolam desa, dan Olahan Tempe/Tahu lumbung.',
+    ];
+
+    const resultMenu = {
       id: `menu-${Date.now()}`,
-      sasaran: body.sasaran || 'balita',
-      sasaran_label: body.sasaran === 'balita' ? 'Balita Posyandu (140 anak)' : 'Ibu Hamil & Menyusui',
+      sasaran: sasaran,
+      sasaran_label: labelSasaran,
       jumlah_penerima: penerima,
       durasi: durasi,
-      biaya_rata_per_porsi_rp: 5950,
-      biaya_total_rp: 5950 * penerima * durasi,
-      disclaimer: 'Dibuat AI, periksa kembali sebelum bertindak. Nilai gizi dihitung berbasis Linear Programming dan harus diverifikasi dengan petugas gizi Puskesmas.',
-      substitusi_impor: [
-        'Mengganti 100% terigu impor dengan tepung mocaf singkong dan jagung lokal.',
-        'Mengutamakan protein nabati lokal (tempe lumbung & telur ayam peternak desa).',
-      ],
+      prioritas: prioritas,
+      biaya_total_rp: totalBiayaSeluruhHari,
+      biaya_rata_per_porsi_rp: Math.round(totalBiayaSeluruhHari / (penerima * durasi)),
       rencana_harian: daysPlan,
+      dampak_stok: dampakStok,
+      substitusi_impor: substitusiList,
+      disclaimer: 'Dibuat AI, periksa kembali sebelum bertindak. Nilai gizi dihitung berbasis Linear Programming dan harus diverifikasi bersama petugas gizi Puskesmas.',
+      status: 'draf',
     };
+
+    return resultMenu;
   }
 
   if (cleanPath.includes('/menus/') && cleanPath.endsWith('/commit')) {
+    // Kurangi stok komoditas yang terpakai untuk PMT di state lumbung desa
+    const commJagung = stateOverview.komoditas.find((c: any) => c.id === 'c-jagung');
+    if (commJagung) {
+      commJagung.stok_efektif = Math.max(0, commJagung.stok_efektif - 35);
+      commJagung.hari_bertahan = +(commJagung.stok_efektif / commJagung.kebutuhan_harian).toFixed(1);
+    }
+    const commKedelai = stateOverview.komoditas.find((c: any) => c.id === 'c-kedelai');
+    if (commKedelai) {
+      commKedelai.stok_efektif = Math.max(0, commKedelai.stok_efektif - 25);
+      commKedelai.hari_bertahan = +(commKedelai.stok_efektif / commKedelai.kebutuhan_harian).toFixed(1);
+    }
+
     return {
       status: 'sukses',
+      pesan: 'Pemakaian stok bahan PMT berhasil dicatat ke buku besar persediaan desa.',
       transaksi_pmt: [
-        { commodity: 'jagung', volume: 8.4 },
-        { commodity: 'kedelai', volume: 6.3 },
+        { commodity: 'Jagung Pipil', volume_kg: 35.0 },
+        { commodity: 'Kedelai / Olahan Tempe', volume_kg: 25.0 },
       ],
     };
   }
 
   // 10. Inter-Village Network & Transport Optimizer (F10)
   if (cleanPath.startsWith('/network/villages')) {
+    const ownDocByKode: Record<string, number> = {};
+    stateOverview.komoditas.forEach((c: any) => {
+      ownDocByKode[c.kode] = c.hari_bertahan;
+    });
+
+    const villagesList = [
+      {
+        id: 'v-sidomulyo',
+        nama: 'Desa Sidomulyo',
+        is_own: true,
+        penduduk: 1800,
+        catatan_peran: 'Desa Kita (Pertanian Padi & Lumbung)',
+        status: stateOverview.pool_pokok?.status || 'Waspada',
+        lat: -7.970,
+        lon: 112.600,
+        doc_by_kode: ownDocByKode,
+        hari_bertahan_terburuk: stateOverview.titik_terlemah?.hari_bertahan || 14.5,
+      },
+      {
+        id: 'v-karangsari',
+        nama: 'Desa Karangsari',
+        is_own: false,
+        penduduk: 1650,
+        catatan_peran: 'Surplus Kedelai & Sentra Tahu Tempe (Kandidat Donor Kedelai)',
+        status: 'Aman',
+        lat: -7.945,
+        lon: 112.625,
+        doc_by_kode: { beras: 36.0, jagung: 30.0, singkong: 22.0, terigu: 24.0, kedelai: 32.0, telur: 25.0, minyak: 35.0, gula: 28.0, bawang_merah: 18.0, cabai_rawit: 20.0 },
+        hari_bertahan_terburuk: 18.0,
+      },
+      {
+        id: 'v-sumberrejo',
+        nama: 'Desa Sumberrejo',
+        is_own: false,
+        penduduk: 2100,
+        catatan_peran: 'Surplus Padi & Lumbung Induk Wilayah',
+        status: 'Aman',
+        lat: -7.990,
+        lon: 112.635,
+        doc_by_kode: { beras: 42.0, jagung: 25.0, singkong: 18.0, terigu: 20.0, kedelai: 18.0, telur: 22.0, minyak: 30.0, gula: 24.0, bawang_merah: 16.0, cabai_rawit: 18.0 },
+        hari_bertahan_terburuk: 16.0,
+      },
+      {
+        id: 'v-wonokerto',
+        nama: 'Desa Wonokerto',
+        is_own: false,
+        penduduk: 1400,
+        catatan_peran: 'Sentra Jagung & Singkong Dataran Tinggi',
+        status: 'Waspada',
+        lat: -7.930,
+        lon: 112.580,
+        doc_by_kode: { beras: 22.0, jagung: 40.0, singkong: 35.0, terigu: 16.0, kedelai: 15.0, telur: 18.0, minyak: 20.0, gula: 22.0, bawang_merah: 20.0, cabai_rawit: 22.0 },
+        hari_bertahan_terburuk: 15.0,
+      },
+      {
+        id: 'v-sukomakmur',
+        nama: 'Desa Sukomakmur',
+        is_own: false,
+        penduduk: 1950,
+        catatan_peran: 'Defisit Pangan (Lahan Tambang & Buruh)',
+        status: 'Siaga',
+        lat: -7.955,
+        lon: 112.650,
+        doc_by_kode: { beras: 16.0, jagung: 14.0, singkong: 12.0, terigu: 10.0, kedelai: 9.5, telur: 11.0, minyak: 15.0, gula: 18.0, bawang_merah: 10.0, cabai_rawit: 12.0 },
+        hari_bertahan_terburuk: 9.5,
+      },
+      {
+        id: 'v-majumakmur',
+        nama: 'Desa Majumakmur',
+        is_own: false,
+        penduduk: 1550,
+        catatan_peran: 'Sentra Hortikultura Sayur & Telur Unggas',
+        status: 'Aman',
+        lat: -8.005,
+        lon: 112.595,
+        doc_by_kode: { beras: 29.0, jagung: 22.0, singkong: 20.0, terigu: 18.0, kedelai: 16.0, telur: 38.0, minyak: 25.0, gula: 22.0, bawang_merah: 28.0, cabai_rawit: 30.0 },
+        hari_bertahan_terburuk: 16.0,
+      },
+    ];
+
     return {
-      desa: [
-        {
-          id: 'v-sidomulyo',
-          nama: 'Desa Sidomulyo',
-          is_own: true,
-          penduduk: 1800,
-          catatan_peran: 'Desa Kita (Pertanian Padi & Lumbung)',
-          status: 'Waspada',
-          lat: -7.970,
-          lon: 112.600,
-          doc_by_kode: { beras: 38.0, jagung: 28.0, singkong: 20.0, terigu: 15.0, kedelai: 14.5, telur: 16.0, minyak: 30.0, gula: 25.0, bawang_merah: 14.0, cabai_rawit: 16.0 },
-        },
-        {
-          id: 'v-karangsari',
-          nama: 'Desa Karangsari',
-          is_own: false,
-          penduduk: 1650,
-          catatan_peran: 'Surplus Kedelai & Sentra Tahu Tempe',
-          status: 'Aman',
-          lat: -7.945,
-          lon: 112.625,
-          doc_by_kode: { beras: 36.0, jagung: 30.0, singkong: 22.0, terigu: 24.0, kedelai: 32.0, telur: 25.0, minyak: 35.0, gula: 28.0, bawang_merah: 18.0, cabai_rawit: 20.0 },
-        },
-        {
-          id: 'v-sumberrejo',
-          nama: 'Desa Sumberrejo',
-          is_own: false,
-          penduduk: 2100,
-          catatan_peran: 'Surplus Padi & Lumbung Induk',
-          status: 'Aman',
-          lat: -7.990,
-          lon: 112.635,
-          doc_by_kode: { beras: 42.0, jagung: 25.0, singkong: 18.0, terigu: 20.0, kedelai: 18.0, telur: 22.0, minyak: 30.0, gula: 24.0, bawang_merah: 16.0, cabai_rawit: 18.0 },
-        },
-        {
-          id: 'v-wonokerto',
-          nama: 'Desa Wonokerto',
-          is_own: false,
-          penduduk: 1400,
-          catatan_peran: 'Sentra Jagung & Singkong Dataran Tinggi',
-          status: 'Waspada',
-          lat: -7.930,
-          lon: 112.580,
-          doc_by_kode: { beras: 22.0, jagung: 40.0, singkong: 35.0, terigu: 16.0, kedelai: 15.0, telur: 18.0, minyak: 20.0, gula: 22.0, bawang_merah: 20.0, cabai_rawit: 22.0 },
-        },
-        {
-          id: 'v-sukomakmur',
-          nama: 'Desa Sukomakmur',
-          is_own: false,
-          penduduk: 1950,
-          catatan_peran: 'Defisit Pangan (Lahan Tambang/Industri)',
-          status: 'Siaga',
-          lat: -7.955,
-          lon: 112.650,
-          doc_by_kode: { beras: 16.0, jagung: 14.0, singkong: 12.0, terigu: 10.0, kedelai: 9.5, telur: 11.0, minyak: 15.0, gula: 18.0, bawang_merah: 10.0, cabai_rawit: 12.0 },
-        },
-        {
-          id: 'v-majumakmur',
-          nama: 'Desa Majumakmur',
-          is_own: false,
-          penduduk: 1550,
-          catatan_peran: 'Sentra Hortikultura & Telur Unggas',
-          status: 'Aman',
-          lat: -8.005,
-          lon: 112.595,
-          doc_by_kode: { beras: 29.0, jagung: 22.0, singkong: 20.0, terigu: 18.0, kedelai: 16.0, telur: 38.0, minyak: 25.0, gula: 22.0, bawang_merah: 28.0, cabai_rawit: 30.0 },
-        },
-      ],
+      desa: villagesList,
     };
   }
 
   if (cleanPath.startsWith('/network/optimize')) {
+    const kedelaiComm = stateOverview.komoditas.find((c: any) => c.id === 'c-kedelai') || { hari_bertahan: 14.5 };
+    const teriguComm = stateOverview.komoditas.find((c: any) => c.id === 'c-terigu') || { hari_bertahan: 15.0 };
+
     return {
       target_hari: 30,
       batas_donor: 21,
@@ -1119,9 +1504,13 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
           jumlah_kg: 350.0,
           jarak_km: 4.2,
           biaya_angkut_rp: 44100,
-          draf_pesan: 'Mohon dukungan pasokan cadangan kedelai 350 kg dari lumbung donor Karangsari untuk Posyandu Sidomulyo.',
-          dampak_doc: 'Menaikkan cadangan kedelai Sidomulyo dari 14.5 menjadi 18.4 hari.',
-          alasan: 'Karangsari surplus kedelai (32 hari, aman di atas batas donor 21 hari).',
+          doc_donor_sebelum: 32.0,
+          doc_donor_sesudah: 24.2,
+          doc_penerima_sebelum: kedelaiComm.hari_bertahan,
+          doc_penerima_sesudah: +(kedelaiComm.hari_bertahan + (350 / 90)).toFixed(1),
+          draf_pesan: 'Mohon izin mengajukan permohonan dukungan pinjam-pakai cadangan kedelai sebanyak 350 kg dari Lumbung Desa Karangsari untuk pemenuhan sasaran Posyandu dan PMT balita Desa Sidomulyo.',
+          dampak_doc: `Menaikkan cadangan kedelai Sidomulyo dari ${kedelaiComm.hari_bertahan} menjadi ${+(kedelaiComm.hari_bertahan + (350 / 90)).toFixed(1)} hari.`,
+          alasan: 'Karangsari memiliki surplus kedelai 32 hari (sisa 24,2 hari, aman di atas ambang donor 21 hari) dengan jarak terdekat 4,2 km.',
         },
         {
           id: 'trf-usulan-2',
@@ -1135,8 +1524,13 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
           jumlah_kg: 400.0,
           jarak_km: 4.2,
           biaya_angkut_rp: 50400,
-          dampak_doc: 'Menaikkan cadangan terigu Sidomulyo dari 15.0 menjadi 22.4 hari (Masuk Status Aman).',
-          alasan: 'Rute terpendek 4.2 km dengan biaya angkut paling efisien.',
+          doc_donor_sebelum: 24.0,
+          doc_donor_sesudah: 21.0,
+          doc_penerima_sebelum: teriguComm.hari_bertahan,
+          doc_penerima_sesudah: +(teriguComm.hari_bertahan + (400 / 54)).toFixed(1),
+          draf_pesan: 'Bersama ini Pemerintah Desa Sidomulyo mengajukan permohonan transfer stok terigu 400 kg dari Desa Karangsari guna menstabilkan cadangan bahan pokok pangan desa.',
+          dampak_doc: `Menaikkan cadangan terigu Sidomulyo dari ${teriguComm.hari_bertahan} menjadi ${+(teriguComm.hari_bertahan + (400 / 54)).toFixed(1)} hari (mencapai status Aman).`,
+          alasan: 'Rute distribusi logistik antar-desa terdekat (4,2 km) dengan estimasi biaya angkut pickup Rp 50.400.',
         },
       ],
     };
@@ -1154,40 +1548,72 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
       created_at: new Date().toISOString(),
       ...body,
     };
-    stateMyTransfers.push(tr);
+    stateMyTransfers.unshift(tr);
     return { status: 'sukses', pesan: 'Permintaan bantuan berhasil dibuat.', data: tr };
   }
 
   if (cleanPath.startsWith('/transfers/incoming')) {
     return {
-      permintaan_masuk: [
-        {
-          id: 'trf-in-1',
-          dari_village_id: 'v-sidomulyo',
-          dari_village_nama: 'Desa Sidomulyo',
-          ke_village_id: 'v-sukomakmur',
-          ke_village_nama: 'Desa Sukomakmur',
-          commodity_id: 'c-beras',
-          commodity_nama: 'Beras',
-          satuan: 'kg',
-          jumlah: 500.0,
-          status: 'Diajukan',
-          draf_pesan: 'Permohonan pinjaman cadangan beras 500 kg untuk penanganan darurat kekurangan pangan warga.',
-          doc_desa_kita_sebelum: 38.0,
-          doc_desa_kita_sesudah: 36.9,
-          aman_untuk_disetujui: true,
-        },
-      ],
+      permintaan_masuk: stateIncomingTransfers,
+    };
+  }
+
+  if (cleanPath.startsWith('/transfers/') && method === 'PATCH') {
+    const tid = cleanPath.split('/')[2];
+    const target = stateIncomingTransfers.find((t: any) => t.id === tid);
+    const newStatus = body?.status || 'Disetujui';
+    if (target) {
+      target.status = newStatus;
+      if (newStatus === 'Disetujui') {
+        const comm = stateOverview.komoditas.find((c: any) => c.id === target.commodity_id || c.kode === target.commodity_id);
+        if (comm && target.jumlah) {
+          comm.stok_efektif = Math.max(0, Math.round((comm.stok_efektif - Number(target.jumlah)) * 10) / 10);
+          recalculateOverviewSummary();
+        }
+      }
+    }
+    return {
+      status: 'sukses',
+      pesan: `Permintaan transfer dari ${target?.ke_village_nama || 'desa tetangga'} berhasil diubah menjadi: ${newStatus}.`,
     };
   }
 
   if (cleanPath.startsWith('/demo/approve-transfer')) {
-    if (stateMyTransfers.length > 0) {
-      stateMyTransfers[0].status = 'Disetujui';
+    const tid = body?.transfer_id;
+    let target = stateMyTransfers.find((t: any) => t.id === tid);
+    if (!target && stateMyTransfers.length > 0) {
+      target = stateMyTransfers.find((t: any) => t.status === 'Diajukan') || stateMyTransfers[0];
     }
+    if (!target) {
+      target = {
+        id: `trf-${Date.now()}`,
+        dari_village_id: 'v-karangsari',
+        dari_village_nama: 'Desa Karangsari',
+        ke_village_id: 'v-sidomulyo',
+        ke_village_nama: 'Desa Sidomulyo (Kita)',
+        commodity_id: 'c-kedelai',
+        commodity_nama: 'Kedelai',
+        satuan: 'kg',
+        jumlah: 350.0,
+        jarak_km: 4.2,
+        biaya_angkut: 44100,
+        status: 'Diajukan',
+        draf_pesan: 'Mohon dukungan pasokan cadangan kedelai 350 kg untuk pemenuhan gizi balita Sidomulyo.',
+        created_at: new Date().toISOString(),
+      };
+      stateMyTransfers.unshift(target);
+    }
+    target.status = 'Diterima';
+
+    const comm = stateOverview.komoditas.find((c: any) => c.id === target.commodity_id || c.kode === target.commodity_id);
+    if (comm && target.jumlah) {
+      comm.stok_efektif = Math.round((comm.stok_efektif + Number(target.jumlah)) * 10) / 10;
+      recalculateOverviewSummary();
+    }
+
     return {
       status: 'sukses',
-      pesan: 'Permintaan transfer antar-desa berhasil disetujui. Cadangan komoditas otomatis disesuaikan.',
+      pesan: `Permintaan transfer bantuan disetujui donor (${target.dari_village_nama}). Cadangan ${target.commodity_nama} Desa Sidomulyo bertambah ${target.jumlah} ${target.satuan || 'kg'}.`,
     };
   }
 
@@ -1307,8 +1733,8 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
     // kurangi stok sedikit untuk mensimulasikan konsumsi harian
     stateOverview.komoditas.forEach((c: any) => {
       c.stok_efektif = Math.max(0, c.stok_efektif - c.kebutuhan_harian * days);
-      c.hari_bertahan = +(c.stok_efektif / c.kebutuhan_harian).toFixed(1);
     });
+    recalculateOverviewSummary();
     return {
       status: 'sukses',
       pesan: `Waktu virtual berhasil dimajukan ${days} hari. Konsumsi harian warga telah dipotong dari stok.`,
@@ -1317,6 +1743,42 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
 
   if (cleanPath.startsWith('/demo/reset')) {
     stateOverview = JSON.parse(JSON.stringify(INITIAL_OVERVIEW));
+    stateMyTransfers = [
+      {
+        id: 'trf-1',
+        dari_village_id: 'v-karangsari',
+        dari_village_nama: 'Desa Karangsari',
+        ke_village_id: 'v-sidomulyo',
+        ke_village_nama: 'Desa Sidomulyo (Kita)',
+        commodity_id: 'c-kedelai',
+        commodity_nama: 'Kedelai',
+        satuan: 'kg',
+        jumlah: 350.0,
+        jarak_km: 4.2,
+        biaya_angkut: 44100,
+        status: 'Diajukan',
+        draf_pesan: 'Mohon dukungan pasokan cadangan kedelai 350 kg untuk pemenuhan gizi balita Sidomulyo.',
+        created_at: '2026-11-12T08:30:00',
+      },
+    ];
+    stateIncomingTransfers = [
+      {
+        id: 'trf-in-1',
+        dari_village_id: 'v-sidomulyo',
+        dari_village_nama: 'Desa Sidomulyo (Kita)',
+        ke_village_id: 'v-sukomakmur',
+        ke_village_nama: 'Desa Sukomakmur',
+        commodity_id: 'c-beras',
+        commodity_nama: 'Beras',
+        satuan: 'kg',
+        jumlah: 500.0,
+        status: 'Diajukan',
+        draf_pesan: 'Permohonan bantuan darurat cadangan beras 500 kg dari Lumbung Desa Sidomulyo untuk menangani defisit pangan 35 KK rentan di Dusun Krajan Sukomakmur.',
+        doc_desa_kita_sebelum: 38.0,
+        doc_desa_kita_sesudah: 36.9,
+        aman_untuk_disetujui: true,
+      },
+    ];
     return { status: 'sukses', pesan: 'Semua data simulasi berhasil di-reset ke kondisi awal prototipe.' };
   }
 

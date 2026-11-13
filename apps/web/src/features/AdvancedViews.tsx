@@ -1383,6 +1383,65 @@ export const VillageNetworkView: React.FC<{
         onSelect={(v) => setSelectedVillage(v)}
       />
 
+      {/* Selected Village Detail Panel */}
+      {selectedVillage && (
+        <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-stone-100 pb-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-extrabold text-base text-stone-900">{selectedVillage.nama}</h3>
+                {selectedVillage.is_own && (
+                  <span className="px-2 py-0.5 rounded-full bg-brand-100 text-brand-900 text-[10px] font-bold">
+                    Desa Kita
+                  </span>
+                )}
+                <StatusBadge status={selectedVillage.status} size="sm" />
+              </div>
+              <p className="text-xs text-stone-600 mt-0.5">
+                {selectedVillage.catatan_peran} · Penduduk: {formatAngka(selectedVillage.penduduk, 0)} jiwa
+              </p>
+            </div>
+            {!selectedVillage.is_own && (
+              <button
+                type="button"
+                onClick={handleFindHelp}
+                className="px-3.5 py-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-bold text-xs shadow-sm transition"
+              >
+                Cari Jalur Distribusi Optimal
+              </button>
+            )}
+          </div>
+
+          <div>
+            <span className="text-[11px] font-bold text-stone-600 uppercase tracking-wide block mb-2">
+              Hari Bertahan Cadangan (DoC) 10 Komoditas di {selectedVillage.nama}:
+            </span>
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+              {['beras', 'jagung', 'singkong', 'terigu', 'kedelai', 'telur', 'minyak', 'gula', 'bawang_merah', 'cabai_rawit'].map((k) => {
+                const doc = selectedVillage.doc_by_kode?.[k] ?? 0;
+                const isSafe = doc >= 21;
+                const isWarning = doc >= 14 && doc < 21;
+                return (
+                  <div key={k} className="p-2 rounded-xl bg-stone-50 border border-stone-200/80">
+                    <span className="block text-[11px] text-stone-500 capitalize">
+                      {k.replace('_', ' ')}
+                    </span>
+                    <div className="flex items-baseline justify-between mt-0.5">
+                      <strong className={`text-sm ${isSafe ? 'text-emerald-700' : isWarning ? 'text-amber-700' : 'text-red-700'}`}>
+                        {formatAngka(doc, 1)} hr
+                      </strong>
+                      <span className="text-[10px] text-stone-600">
+                        {isSafe ? 'Aman' : isWarning ? 'Waspada' : 'Siaga'}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="flex flex-wrap rounded-xl bg-stone-200/80 p-1 gap-1">
         {[
@@ -1409,8 +1468,13 @@ export const VillageNetworkView: React.FC<{
           {villages.map((v: any) => (
             <div
               key={v.id}
-              className={`rounded-2xl border p-4 bg-white shadow-sm ${
-                v.is_own ? 'border-brand-600 ring-1 ring-brand-600/30' : 'border-stone-200'
+              onClick={() => setSelectedVillage(v)}
+              className={`rounded-2xl border p-4 bg-white shadow-sm cursor-pointer transition hover:shadow-md ${
+                selectedVillage?.id === v.id
+                  ? 'border-brand-600 ring-2 ring-brand-600/30'
+                  : v.is_own
+                  ? 'border-brand-500/60'
+                  : 'border-stone-200'
               }`}
             >
               <div className="flex items-center justify-between gap-2 mb-2">

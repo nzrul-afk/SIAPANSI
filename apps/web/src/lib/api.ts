@@ -9,16 +9,14 @@ import {
 } from '../db/offlineQueue';
 
 const envBase = import.meta.env.VITE_API_BASE;
-export const DEFAULT_API_BASE = 'https://jimmy-morris-viii-affected.trycloudflare.com/api/v1';
+export const DEFAULT_API_BASE = '/api/v1';
 
 export function getApiBase(): string {
   if (typeof window !== 'undefined') {
     const custom = localStorage.getItem('siapansa_api_base');
     if (custom) return custom.replace(/\/+$/, '');
     if (envBase) return envBase.replace(/\/+$/, '');
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      return DEFAULT_API_BASE;
-    }
+    return '/api/v1';
   }
   return envBase || '/api/v1';
 }

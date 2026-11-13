@@ -4,7 +4,10 @@ import warnings
 from datetime import date, timedelta
 from typing import Dict, List, Optional, Tuple
 import numpy as np
-from statsmodels.tsa.holtwinters import ExponentialSmoothing
+try:
+    from statsmodels.tsa.holtwinters import ExponentialSmoothing
+except ImportError:
+    ExponentialSmoothing = None
 
 _FORECAST_CACHE: Dict[Tuple[float, float, str, float, float, bool], Dict[str, object]] = {}
 
@@ -124,29 +127,36 @@ def forecast_price_4_weeks(
         volatilitas = "Rendah"
 
     method_used = "Holt-Winters ExponentialSmoothing"
-    try:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            model = ExponentialSmoothing(
-                y,
-                trend="add",
-                damped_trend=True,
-                seasonal="add",
-                seasonal_periods=52,
-                initialization_method="heuristic",
-            )
-            fit_res = model.fit(
-                smoothing_level=0.35,
-                smoothing_trend=0.05,
-                smoothing_seasonal=0.15,
-                damping_trend=0.90,
-                optimized=False,
-            )
-            fc_raw = np.array(fit_res.forecast(4), dtype=float)
-            residuals = y - fit_res.fittedvalues
-            if np.any(np.isnan(fc_raw)) or np.any(fc_raw <= 0):
-                raise ValueError("Invalid forecast")
-    except Exception:
+    failed_hw = False
+    if ExponentialSmoothing is not None:
+        try:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                model = ExponentialSmoothing(
+                    y,
+                    trend="add",
+                    damped_trend=True,
+                    seasonal="add",
+                    seasonal_periods=52,
+                    initialization_method="heuristic",
+                )
+                fit_res = model.fit(
+                    smoothing_level=0.35,
+                    smoothing_trend=0.05,
+                    smoothing_seasonal=0.15,
+                    damping_trend=0.90,
+                    optimized=False,
+                )
+                fc_raw = np.array(fit_res.forecast(4), dtype=float)
+                residuals = y - fit_res.fittedvalues
+                if np.any(np.isnan(fc_raw)) or np.any(fc_raw <= 0):
+                    failed_hw = True
+        except Exception:
+            failed_hw = True
+    else:
+        failed_hw = True
+
+    if failed_hw:
         method_used = "Tren Linier + Seasonal Naive (Fallback)"
         slope = (y[-1] - y[-13]) / 12.0 if len(y) >= 13 else 0.0
         fc_raw = np.array([

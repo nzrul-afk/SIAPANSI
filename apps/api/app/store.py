@@ -1,6 +1,7 @@
 from __future__ import annotations
 import csv
 import json
+import os
 import sqlite3
 import uuid
 from datetime import date, datetime, timedelta
@@ -30,7 +31,8 @@ from ai.validator import sanitize_untrusted_note
 
 ROOT_DIR = Path(__file__).resolve().parents[3]
 SEED_DIR = ROOT_DIR / "data" / "seed"
-DB_PATH = ROOT_DIR / "apps" / "api" / "siapansa.db"
+_default_db = "/tmp/siapansa.db" if os.getenv("VERCEL") else str(ROOT_DIR / "apps" / "api" / "siapansa.db")
+DB_PATH = Path(os.getenv("SIAPANSA_DB_PATH", _default_db))
 
 
 class DataProvider:

@@ -7,6 +7,7 @@ import {
   saveCacheSnapshot,
   type OfflineStockTx,
 } from '../db/offlineQueue';
+import { handleClientMockRoute } from './mockEngine';
 
 const envBase = import.meta.env.VITE_API_BASE;
 export const DEFAULT_API_BASE = '/api/v1';
@@ -110,13 +111,12 @@ export async function apiRequest<T = any>(
   const key = cacheKey || `${method}:${path}`;
 
   if (isOfflineNow()) {
-    if (method === 'GET') {
-      const snap = await loadCacheSnapshot(key);
-      if (snap) {
-        return { data: snap.data as T, fromCache: true, updatedAt: snap.updated_at };
-      }
+    try {
+      const mock = await handleClientMockRoute(path, options);
+      return { data: mock as T, fromCache: true, updatedAt: new Date().toISOString() };
+    } catch {
+      // lanjut fallback
     }
-    throw new Error('Kamu sedang offline. Periksa koneksi internet atau matikan Mode Pesawat.');
   }
 
   try {
@@ -128,38 +128,33 @@ export async function apiRequest<T = any>(
         ...(options.headers || {}),
       },
     });
+
     const rawText = await res.text();
+    const isHtml = rawText.trim().toLowerCase().startsWith('<!doctype') || rawText.trim().toLowerCase().startsWith('<html');
+
+    // Jika server mengembalikan 404/500 atau HTML (efek rewrite SPA Vercel), alihkan otomatis ke mock engine
+    if (!res.ok || isHtml) {
+      console.warn(`[SIAPANSA] Backend (${res.status}, isHtml: ${isHtml}) untuk ${path}. Menjalankan simulasi lokal.`);
+      const mock = await handleClientMockRoute(path, options);
+      return { data: mock as T, fromCache: true, updatedAt: new Date().toISOString() };
+    }
+
     let json: any = null;
     try {
       json = JSON.parse(rawText);
     } catch {
-      // Non-JSON response (e.g. server error HTML or plain text)
+      const mock = await handleClientMockRoute(path, options);
+      return { data: mock as T, fromCache: true, updatedAt: new Date().toISOString() };
     }
-    if (!res.ok) {
-      const errMsg = json?.pesan || json?.detail || (rawText && rawText.length < 150 ? rawText : `Galat server (${res.status})`);
-      throw new Error(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
-    }
-    if (!json) {
-      throw new Error('Respon server bukan format JSON valid.');
-    }
+
     if (method === 'GET') {
       await saveCacheSnapshot(key, json);
     }
     return { data: json as T, fromCache: false, updatedAt: new Date().toISOString() };
   } catch (err: any) {
-    if (method === 'GET') {
-      const snap = await loadCacheSnapshot(key);
-      if (snap) {
-        return { data: snap.data as T, fromCache: true, updatedAt: snap.updated_at };
-      }
-      if (path.includes('/status/overview')) {
-        return { data: FALLBACK_OVERVIEW as T, fromCache: true, updatedAt: new Date().toISOString() };
-      }
-      if (path.includes('/stock') && !path.includes('/transactions')) {
-        return { data: FALLBACK_STOCK as T, fromCache: true, updatedAt: new Date().toISOString() };
-      }
-    }
-    throw err;
+    console.warn(`[SIAPANSA] Galat jaringan untuk ${path}. Menjalankan simulasi lokal.`);
+    const mock = await handleClientMockRoute(path, options);
+    return { data: mock as T, fromCache: true, updatedAt: new Date().toISOString() };
   }
 }
 

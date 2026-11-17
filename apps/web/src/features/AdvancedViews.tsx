@@ -1446,7 +1446,7 @@ export const VillageNetworkView: React.FC<{
       {/* Tabs */}
       <div className="flex flex-wrap rounded-xl bg-stone-200/80 p-1 gap-1">
         {[
-          { id: 'status', label: 'Status 6 Desa & Surplus/Defisit' },
+          { id: 'status', label: 'Status 2 Desa & Surplus/Defisit' },
           { id: 'usulan', label: `Usulan Bantuan (${optData?.usulan_transfer?.length || 0})` },
           { id: 'permintaan_saya', label: `Permintaan Saya (${myTransfers.length})` },
           { id: 'masuk', label: `Permintaan Masuk (${incomingTransfers.length})` },

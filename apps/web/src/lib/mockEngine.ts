@@ -376,16 +376,16 @@ let stateIncomingTransfers: Array<any> = [
     id: 'trf-in-1',
     dari_village_id: 'v-sidomulyo',
     dari_village_nama: 'Desa Sidomulyo (Kita)',
-    ke_village_id: 'v-sukomakmur',
-    ke_village_nama: 'Desa Sukomakmur',
+    ke_village_id: 'v-karangsari',
+    ke_village_nama: 'Desa Karangsari',
     commodity_id: 'c-beras',
     commodity_nama: 'Beras',
     satuan: 'kg',
-    jumlah: 500.0,
+    jumlah: 300.0,
     status: 'Diajukan',
-    draf_pesan: 'Permohonan bantuan darurat cadangan beras 500 kg dari Lumbung Desa Sidomulyo untuk menangani defisit pangan 35 KK rentan di Dusun Krajan Sukomakmur.',
+    draf_pesan: 'Permohonan pinjam cadangan beras 300 kg dari Lumbung Desa Sidomulyo untuk kebutuhan cadangan darurat Desa Karangsari.',
     doc_desa_kita_sebelum: 38.0,
-    doc_desa_kita_sesudah: 36.9,
+    doc_desa_kita_sesudah: 37.3,
     aman_untuk_disetujui: true,
   },
 ];
@@ -1519,54 +1519,6 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
         doc_by_kode: { beras: 36.0, jagung: 30.0, singkong: 22.0, terigu: 24.0, kedelai: 32.0, telur: 25.0, minyak: 35.0, gula: 28.0, bawang_merah: 18.0, cabai_rawit: 20.0 },
         hari_bertahan_terburuk: 18.0,
       },
-      {
-        id: 'v-sumberrejo',
-        nama: 'Desa Sumberrejo',
-        is_own: false,
-        penduduk: 2100,
-        catatan_peran: 'Surplus Padi & Lumbung Induk Wilayah',
-        status: 'Aman',
-        lat: -7.990,
-        lon: 112.635,
-        doc_by_kode: { beras: 42.0, jagung: 25.0, singkong: 18.0, terigu: 20.0, kedelai: 18.0, telur: 22.0, minyak: 30.0, gula: 24.0, bawang_merah: 16.0, cabai_rawit: 18.0 },
-        hari_bertahan_terburuk: 16.0,
-      },
-      {
-        id: 'v-wonokerto',
-        nama: 'Desa Wonokerto',
-        is_own: false,
-        penduduk: 1400,
-        catatan_peran: 'Sentra Jagung & Singkong Dataran Tinggi',
-        status: 'Waspada',
-        lat: -7.930,
-        lon: 112.580,
-        doc_by_kode: { beras: 22.0, jagung: 40.0, singkong: 35.0, terigu: 16.0, kedelai: 15.0, telur: 18.0, minyak: 20.0, gula: 22.0, bawang_merah: 20.0, cabai_rawit: 22.0 },
-        hari_bertahan_terburuk: 15.0,
-      },
-      {
-        id: 'v-sukomakmur',
-        nama: 'Desa Sukomakmur',
-        is_own: false,
-        penduduk: 1950,
-        catatan_peran: 'Defisit Pangan (Lahan Tambang & Buruh)',
-        status: 'Siaga',
-        lat: -7.955,
-        lon: 112.650,
-        doc_by_kode: { beras: 16.0, jagung: 14.0, singkong: 12.0, terigu: 10.0, kedelai: 9.5, telur: 11.0, minyak: 15.0, gula: 18.0, bawang_merah: 10.0, cabai_rawit: 12.0 },
-        hari_bertahan_terburuk: 9.5,
-      },
-      {
-        id: 'v-majumakmur',
-        nama: 'Desa Majumakmur',
-        is_own: false,
-        penduduk: 1550,
-        catatan_peran: 'Sentra Hortikultura Sayur & Telur Unggas',
-        status: 'Aman',
-        lat: -8.005,
-        lon: 112.595,
-        doc_by_kode: { beras: 29.0, jagung: 22.0, singkong: 20.0, terigu: 18.0, kedelai: 16.0, telur: 38.0, minyak: 25.0, gula: 22.0, bawang_merah: 28.0, cabai_rawit: 30.0 },
-        hari_bertahan_terburuk: 16.0,
-      },
     ];
 
     return {
@@ -1739,9 +1691,9 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
       const topPrice = [...stateOverview.komoditas].sort((a: any, b: any) => b.harga_sekarang - a.harga_sekarang)[0];
       reply = `Harga komoditas pangan lokal Sidomulyo terpantau stabil dengan skor eksposur pasar global ${stateOverview.skor_ketahanan?.skor_eksposur_global || 3.4}/10. Komoditas dengan harga tertinggi saat ini adalah ${topPrice?.nama || 'Cabai'} (Rp ${topPrice?.harga_sekarang?.toLocaleString('id-ID')}/${topPrice?.satuan}).`;
       toolSummary = { tool: 'price_signals', label: 'Sinyal Global & Harga Pasar (F8)', ringkasan_data: { eksposur: stateOverview.skor_ketahanan?.skor_eksposur_global, komoditas_tertinggi: topPrice?.nama } };
-    } else if (q.includes('sukomakmur') || q.includes('defisit') || q.includes('tetangga')) {
-      reply = `Desa Sukomakmur berada pada status Siaga (cadangan pangan terendah 9,5 hari). Sukomakmur telah mengajukan permohonan pinjam cadangan 500 kg beras ke lumbung Sidomulyo dan aman disetujui (sisa cadangan Sidomulyo tetap 36,9 hari di atas batas aman 21 hari).`;
-      toolSummary = { tool: 'cluster_status', label: 'Jaringan Gugus Sumbermulyo (F10)', ringkasan_data: { desa: 'Sukomakmur', status: 'Siaga', permohonan: '500 kg Beras' } };
+    } else if (q.includes('karangsari') || q.includes('tetangga') || q.includes('mitra')) {
+      reply = `Desa Karangsari berada pada status Aman (surplus kedelai 32 hari). Karangsari telah mengajukan permohonan pinjam cadangan 300 kg beras ke lumbung Sidomulyo dan aman disetujui (sisa cadangan beras Sidomulyo tetap 37,3 hari di atas batas aman 21 hari).`;
+      toolSummary = { tool: 'cluster_status', label: 'Jaringan Antar-Desa (F10)', ringkasan_data: { desa: 'Karangsari', status: 'Aman', permohonan: '300 kg Beras' } };
     } else if (q.includes('stok') || q.includes('beras') || q.includes('lumbung')) {
       const beras = stateOverview.komoditas.find((c: any) => c.id === 'c-beras') || { stok_efektif: 17100, hari_bertahan: 38.0 };
       reply = `Stok efektif beras Desa Sidomulyo saat ini mencapai ${formatAngka(beras.stok_efektif, 0)} kg, cukup untuk ${formatAngka(beras.hari_bertahan, 1)} hari konsumsi warga (Status: Aman di atas target 30 hari).`;
@@ -1953,16 +1905,16 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
         id: 'trf-in-1',
         dari_village_id: 'v-sidomulyo',
         dari_village_nama: 'Desa Sidomulyo (Kita)',
-        ke_village_id: 'v-sukomakmur',
-        ke_village_nama: 'Desa Sukomakmur',
+        ke_village_id: 'v-karangsari',
+        ke_village_nama: 'Desa Karangsari',
         commodity_id: 'c-beras',
         commodity_nama: 'Beras',
         satuan: 'kg',
-        jumlah: 500.0,
+        jumlah: 300.0,
         status: 'Diajukan',
-        draf_pesan: 'Permohonan bantuan darurat cadangan beras 500 kg dari Lumbung Desa Sidomulyo untuk menangani defisit pangan 35 KK rentan di Dusun Krajan Sukomakmur.',
+        draf_pesan: 'Permohonan pinjam cadangan beras 300 kg dari Lumbung Desa Sidomulyo untuk kebutuhan cadangan darurat Desa Karangsari.',
         doc_desa_kita_sebelum: 38.0,
-        doc_desa_kita_sesudah: 36.9,
+        doc_desa_kita_sesudah: 37.3,
         aman_untuk_disetujui: true,
       },
     ];

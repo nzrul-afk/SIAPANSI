@@ -94,10 +94,10 @@ const FALLBACK_OVERVIEW: any = {
 
 const FALLBACK_STOCK: any = {
   warehouses: [
-    { id: 'w-lumbung-1', nama: 'Lumbung Pangan Desa', jenis: 'lumbung_desa', kapasitas_kg: 50000, terisi_kg: 24500 },
-    { id: 'w-poktan-1', nama: 'Gudang Kelompok Tani', jenis: 'kelompok_tani', kapasitas_kg: 30000, terisi_kg: 12000 },
-    { id: 'w-rt-est', nama: 'Cadangan Rumah Tangga', jenis: 'rumah_tangga', kapasitas_kg: 20000, terisi_kg: 8500 },
-    { id: 'w-pedagang-1', nama: 'Kios & Pedagang Desa', jenis: 'pedagang', kapasitas_kg: 10000, terisi_kg: 3500 },
+    { id: 'wh-lumbung', nama: 'Lumbung Pangan Desa', jenis: 'lumbung_desa', kapasitas_kg: 50000, terisi_kg: 24500 },
+    { id: 'wh-poktan', nama: 'Gudang Kelompok Tani', jenis: 'kelompok_tani', kapasitas_kg: 30000, terisi_kg: 12000 },
+    { id: 'wh-rt', nama: 'Cadangan Rumah Tangga', jenis: 'rumah_tangga', kapasitas_kg: 20000, terisi_kg: 8500 },
+    { id: 'wh-pedagang', nama: 'Kios & Pedagang Desa', jenis: 'pedagang', kapasitas_kg: 10000, terisi_kg: 3500 },
   ],
   commodities: FALLBACK_OVERVIEW.komoditas,
 };

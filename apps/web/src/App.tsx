@@ -82,8 +82,9 @@ const App: React.FC = () => {
               commodity_id: info.commodityId,
               jenis: 'pembalik',
               reverses_id: info.txId,
+              reverses_arah: info.arah,
               jumlah: info.jumlah,
-              catatan: 'Pembatalan catatan (pembalik)',
+              catatan: `Pembatalan catatan ${info.arah} ${info.nama} (pembalik)`,
             }),
           });
           setToast({ text: 'Catatan dibatalkan lewat transaksi pembalik.' });

@@ -527,7 +527,8 @@ export const SettingsAndDemoView: React.FC<{
               <input
                 type="number"
                 value={settings.target_hari ?? 30}
-                onChange={(e) => handleSaveSettings({ target_hari: Number(e.target.value) })}
+                onChange={(e) => setSettings({ ...settings, target_hari: Number(e.target.value) })}
+                onBlur={(e) => handleSaveSettings({ target_hari: Number(e.target.value) })}
                 className="w-full min-h-[42px] px-3 rounded-lg border border-stone-300 font-bold text-sm"
               />
             </div>
@@ -536,7 +537,8 @@ export const SettingsAndDemoView: React.FC<{
               <input
                 type="number"
                 value={settings.batas_donor ?? 21}
-                onChange={(e) => handleSaveSettings({ batas_donor: Number(e.target.value) })}
+                onChange={(e) => setSettings({ ...settings, batas_donor: Number(e.target.value) })}
+                onBlur={(e) => handleSaveSettings({ batas_donor: Number(e.target.value) })}
                 className="w-full min-h-[42px] px-3 rounded-lg border border-stone-300 font-bold text-sm"
               />
             </div>

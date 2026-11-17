@@ -2,6 +2,8 @@
 // High-fidelity local simulation engine that runs directly in the browser.
 // Guarantees 100% interactive functionality on Vercel or offline without server dependencies.
 
+import { formatAngka } from './format';
+
 export interface MockResponse<T = any> {
   data: T;
   status: number;
@@ -461,11 +463,11 @@ function recalculateOverviewSummary(): void {
   const pokokComms = stateOverview.komoditas.filter((c: any) => c.kelompok === 'pokok');
   const totalStokPokok = pokokComms.reduce((acc: number, c: any) => acc + c.stok_efektif, 0);
   const totalKebutuhanPokok = pokokComms.reduce((acc: number, c: any) => acc + c.kebutuhan_harian, 0);
-  const pokokDays = +(totalStokPokok / totalKebutuhanPokok).toFixed(1);
+  const pokokDays = +(totalStokPokok / Math.max(0.1, totalKebutuhanPokok)).toFixed(1);
   stateOverview.pool_pokok = {
     hari_bertahan: pokokDays,
-    status: pokokDays >= 21 ? 'Aman' : pokokDays >= 14 ? 'Waspada' : 'Siaga',
-    level: pokokDays >= 21 ? 'aman' : pokokDays >= 14 ? 'waspada' : 'siaga',
+    status: pokokDays >= 21 ? 'Aman' : pokokDays >= 14 ? 'Waspada' : pokokDays >= 7 ? 'Siaga' : 'Kritis',
+    level: pokokDays >= 21 ? 'aman' : pokokDays >= 14 ? 'waspada' : pokokDays >= 7 ? 'siaga' : 'kritis',
     bawah_72_jam: pokokDays < 3.0,
     progress_target_pct: Math.min(100, Math.round((pokokDays / targetHari) * 100)),
   };
@@ -474,16 +476,29 @@ function recalculateOverviewSummary(): void {
   const proteinComms = stateOverview.komoditas.filter((c: any) => c.kelompok === 'protein');
   const totalStokProt = proteinComms.reduce((acc: number, c: any) => acc + c.stok_efektif, 0);
   const totalKebutuhanProt = proteinComms.reduce((acc: number, c: any) => acc + c.kebutuhan_harian, 0);
-  const protDays = +(totalStokProt / totalKebutuhanProt).toFixed(1);
+  const protDays = +(totalStokProt / Math.max(0.1, totalKebutuhanProt)).toFixed(1);
   stateOverview.pool_protein = {
     hari_bertahan: protDays,
-    status: protDays >= 21 ? 'Aman' : protDays >= 14 ? 'Waspada' : 'Siaga',
-    level: protDays >= 21 ? 'aman' : protDays >= 14 ? 'waspada' : 'siaga',
+    status: protDays >= 21 ? 'Aman' : protDays >= 14 ? 'Waspada' : protDays >= 7 ? 'Siaga' : 'Kritis',
+    level: protDays >= 21 ? 'aman' : protDays >= 14 ? 'waspada' : protDays >= 7 ? 'siaga' : 'kritis',
     bawah_72_jam: protDays < 3.0,
     progress_target_pct: Math.min(100, Math.round((protDays / targetHari) * 100)),
   };
 
-  // 4. Titik terlemah
+  // 4. Pool pelengkap
+  const pelengkapComms = stateOverview.komoditas.filter((c: any) => c.kelompok === 'pelengkap');
+  const totalStokPelengkap = pelengkapComms.reduce((acc: number, c: any) => acc + c.stok_efektif, 0);
+  const totalKebutuhanPelengkap = pelengkapComms.reduce((acc: number, c: any) => acc + c.kebutuhan_harian, 0);
+  const pelengkapDays = +(totalStokPelengkap / Math.max(0.1, totalKebutuhanPelengkap)).toFixed(1);
+  stateOverview.pool_pelengkap = {
+    hari_bertahan: pelengkapDays,
+    status: pelengkapDays >= 21 ? 'Aman' : pelengkapDays >= 14 ? 'Waspada' : pelengkapDays >= 7 ? 'Siaga' : 'Kritis',
+    level: pelengkapDays >= 21 ? 'aman' : pelengkapDays >= 14 ? 'waspada' : pelengkapDays >= 7 ? 'siaga' : 'kritis',
+    bawah_72_jam: pelengkapDays < 3.0,
+    progress_target_pct: Math.min(100, Math.round((pelengkapDays / targetHari) * 100)),
+  };
+
+  // 5. Titik terlemah
   const sorted = [...stateOverview.komoditas].sort((a: any, b: any) => a.hari_bertahan - b.hari_bertahan);
   const weakest = sorted[0];
   stateOverview.titik_terlemah = {
@@ -497,12 +512,25 @@ function recalculateOverviewSummary(): void {
     progress_target_pct: weakest.progress_target_pct,
   };
 
+  // 6. Update Skor Ketahanan Total
+  if (stateOverview.skor_ketahanan) {
+    const avgProgress = stateOverview.komoditas.reduce((acc: number, c: any) => acc + c.progress_target_pct, 0) / stateOverview.komoditas.length;
+    stateOverview.skor_ketahanan.ketersediaan = +avgProgress.toFixed(1);
+    const totSkor = +(
+      stateOverview.skor_ketahanan.ketersediaan * 0.4 +
+      (stateOverview.skor_ketahanan.akses || 94.3) * 0.3 +
+      (stateOverview.skor_ketahanan.pemanfaatan || 76.3) * 0.3
+    ).toFixed(1);
+    stateOverview.skor_ketahanan.skor_total = totSkor;
+  }
+
   stateOverview.kalimat_ringkasan = `Jika pasokan dari luar berhenti, pangan pokok desa bertahan ${stateOverview.pool_pokok.hari_bertahan} hari. Titik terlemah: ${weakest.nama} (${weakest.hari_bertahan} hari).`;
 }
 
 export async function handleClientMockRoute(path: string, options: RequestInit = {}): Promise<any> {
   const method = (options.method || 'GET').toUpperCase();
-  const cleanPath = path.replace(/^\/api\/v1/, '').replace(/^\/api/, '');
+  const urlObj = new URL(path, 'http://localhost');
+  const cleanPath = urlObj.pathname.replace(/^\/api\/v1/, '').replace(/^\/api/, '');
   let body: any = {};
   if (options.body) {
     try {
@@ -541,29 +569,41 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
 
   // 3. Status Projection
   if (cleanPath.startsWith('/status/projection')) {
-    const days = 30;
+    const cid = urlObj.searchParams.get('commodity') || 'c-beras';
+    const days = parseInt(urlObj.searchParams.get('days') || '30', 10);
+    const comm = stateOverview.komoditas.find((c: any) => c.id === cid || c.kode === cid) || stateOverview.komoditas[0];
+    const stokAwal = Number(comm.stok_efektif) || 0;
+    const kebHarian = Number(comm.kebutuhan_harian) || 1;
     const series = [];
-    const baseDate = new Date('2026-11-12');
+    const baseDate = new Date(stateOverview.as_of || '2026-11-12');
     for (let d = 0; d <= days; d++) {
       const dt = new Date(baseDate.getTime() + d * 86400000);
-      const rem = Math.max(0, 17100 - d * 450);
+      const rem = Math.max(0, Math.round((stokAwal - d * kebHarian) * 10) / 10);
       series.push({
         hari_ke: d,
         tanggal: dt.toISOString().split('T')[0],
+        stok: rem,
         stok_kg: rem,
-        hari_bertahan: +(rem / 450).toFixed(1),
+        hari_bertahan: +(rem / kebHarian).toFixed(1),
+        ambang_aman: Math.round(kebHarian * 21),
+        ambang_siaga: Math.round(kebHarian * 7),
       });
     }
+    const daysUntilEmpty = Math.round(stokAwal / kebHarian);
+    const dateUntilEmpty = new Date(baseDate.getTime() + daysUntilEmpty * 86400000).toISOString().split('T')[0];
+    const daysUntilWarning = Math.max(0, Math.round((stokAwal - 14 * kebHarian) / kebHarian));
+    const dateUntilWarning = new Date(baseDate.getTime() + daysUntilWarning * 86400000).toISOString().split('T')[0];
+
     return {
-      commodity_id: 'c-beras',
-      nama: 'Beras',
-      kebutuhan_harian: 450.0,
-      stok_sekarang: 17100.0,
-      hari_bertahan_sekarang: 38.0,
-      tanggal_stok_habis: '2026-12-20',
-      hari_ke_habis: 38,
-      titik_waspada_hari: 17,
-      tanggal_titik_waspada: '2026-11-29',
+      commodity_id: comm.id,
+      nama: comm.nama,
+      kebutuhan_harian: kebHarian,
+      stok_sekarang: stokAwal,
+      hari_bertahan_sekarang: comm.hari_bertahan,
+      tanggal_stok_habis: dateUntilEmpty,
+      hari_ke_habis: daysUntilEmpty,
+      titik_waspada_hari: daysUntilWarning,
+      tanggal_titik_waspada: dateUntilWarning,
       proyeksi: series,
     };
   }
@@ -641,17 +681,39 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
 
   // Stock Transactions
   if (cleanPath.startsWith('/stock/transactions')) {
-    if (body.commodity_id && body.jumlah) {
-      const comm = stateOverview.komoditas.find((c: any) => c.id === body.commodity_id);
-      if (comm) {
-        if (body.jenis?.startsWith('keluar')) {
-          comm.stok_efektif = Math.max(0, comm.stok_efektif - Number(body.jumlah));
+    const applySingleTx = (tx: any) => {
+      if (!tx.commodity_id || !tx.jumlah) return;
+      const comm = stateOverview.komoditas.find((c: any) => c.id === tx.commodity_id || c.kode === tx.commodity_id);
+      if (!comm) return;
+      const qty = Number(tx.jumlah) || 0;
+      if (tx.jenis === 'pembalik') {
+        // Pembalik: membatalkan transaksi sebelumnya
+        // Jika membatalkan 'masuk', maka kurangi stok; jika membatalkan 'keluar', maka tambah stok
+        if (tx.reverses_arah === 'masuk') {
+          comm.stok_efektif = Math.max(0, Math.round((comm.stok_efektif - qty) * 10) / 10);
         } else {
-          comm.stok_efektif += Number(body.jumlah);
+          comm.stok_efektif = Math.round((comm.stok_efektif + qty) * 10) / 10;
         }
-        recalculateOverviewSummary();
+      } else if (tx.jenis?.startsWith('keluar')) {
+        comm.stok_efektif = Math.max(0, Math.round((comm.stok_efektif - qty) * 10) / 10);
+      } else {
+        comm.stok_efektif = Math.round((comm.stok_efektif + qty) * 10) / 10;
       }
+    };
+
+    if (Array.isArray(body.transactions)) {
+      body.transactions.forEach(applySingleTx);
+      recalculateOverviewSummary();
+      return {
+        status: 'sukses',
+        pesan: `${body.transactions.length} transaksi offline berhasil disinkronkan.`,
+        transactions: body.transactions,
+      };
+    } else if (body.commodity_id && body.jumlah) {
+      applySingleTx(body);
+      recalculateOverviewSummary();
     }
+
     return {
       status: 'sukses',
       pesan: 'Transaksi stok berhasil disimpan.',
@@ -1667,7 +1729,7 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
     const pokokDays = stateOverview.pool_pokok?.hari_bertahan ?? 32.8;
     const protDays = stateOverview.pool_protein?.hari_bertahan ?? 15.3;
     const weakest = stateOverview.titik_terlemah ?? { nama: 'Kedelai', hari_bertahan: 14.5, status: 'Waspada' };
-    let toolSummary = {
+    let toolSummary: { tool: string; label: string; ringkasan_data: any } = {
       tool: 'get_status',
       label: 'Engine Ketahanan Pangan Desa Sumber Rejo',
       ringkasan_data: { status: stateOverview.pool_pokok?.status || 'Aman', doc_pokok: pokokDays, doc_protein: protDays, titik_terlemah: `${weakest.nama} (${weakest.hari_bertahan} hr)` },

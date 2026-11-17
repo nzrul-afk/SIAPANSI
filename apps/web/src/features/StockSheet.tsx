@@ -39,6 +39,23 @@ export const StockTransactionSheet: React.FC<{
 
   if (!open) return null;
 
+  if (!commodities || commodities.length === 0) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-xs">
+        <div className="bg-white p-6 rounded-2xl max-w-sm text-center space-y-3 shadow-lg">
+          <p className="text-sm font-semibold text-stone-700">Memuat data komoditas...</p>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold"
+          >
+            Tutup
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const selectedComm = commodities.find((c) => c.id === commodityId) || commodities[0];
   const avgTx = Math.max(20, Number(selectedComm?.kebutuhan_harian || 50) * 1.5);
   const numVal = parseFloat(jumlah) || 0;

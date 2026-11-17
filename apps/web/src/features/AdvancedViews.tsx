@@ -873,10 +873,10 @@ export const SimulatorView: React.FC<{
             <div className="flex flex-wrap gap-2 pt-2">
               <button
                 type="button"
-                onClick={() => onNavigate('menu')}
+                onClick={() => onNavigate('stok')}
                 className="min-h-[44px] px-4 rounded-xl bg-brand-700 text-white text-xs font-bold"
               >
-                Susun Menu Substitusi Lokal (PMT)
+                Periksa Cadangan Pangan Lokal (Buku Stok)
               </button>
               <button
                 type="button"

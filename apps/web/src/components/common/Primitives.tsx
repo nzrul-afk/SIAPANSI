@@ -319,6 +319,14 @@ export const VillageClusterMap: React.FC<{
     );
   }
 
+  if (!villages || villages.length === 0) {
+    return (
+      <div className="rounded-xl border border-stone-200 bg-white p-4 text-xs text-stone-500 text-center">
+        Tidak ada data desa untuk dipetakan.
+      </div>
+    );
+  }
+
   const lats = villages.map((v) => Number(v.lat));
   const lons = villages.map((v) => Number(v.lon));
   const minLat = Math.min(...lats) - 0.015;

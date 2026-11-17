@@ -6,12 +6,12 @@ import {
   ArrowRight,
   ArrowUpRight,
   Bell,
-  Bot,
   Calendar,
   ChevronDown,
   ChevronUp,
   ClipboardList,
   Clock,
+  FileText,
   Filter,
   Package,
   Printer,
@@ -19,7 +19,6 @@ import {
   Search,
   Settings,
   ShieldCheck,
-  Sliders,
   Sprout,
   TrendingDown,
   TrendingUp,
@@ -234,15 +233,15 @@ export const DashboardView: React.FC<{
 
         <button
           type="button"
-          onClick={() => onNavigate('simulasi')}
+          onClick={() => onNavigate('prediksi')}
           className="p-3 rounded-2xl bg-white border border-stone-200 hover:border-brand-500 hover:shadow-xs text-left transition flex items-center gap-2.5 group"
         >
           <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 group-hover:bg-amber-600 group-hover:text-white transition">
-            <Sliders className="w-4 h-4" />
+            <Sprout className="w-4 h-4" />
           </div>
           <div>
-            <p className="font-extrabold text-xs text-stone-900 leading-tight">Simulasi Krisis</p>
-            <p className="text-[10px] text-stone-500">Uji Guncangan</p>
+            <p className="font-extrabold text-xs text-stone-900 leading-tight">Prediksi Panen</p>
+            <p className="text-[10px] text-stone-500">Estimasi Hasil</p>
           </div>
         </button>
 
@@ -262,15 +261,15 @@ export const DashboardView: React.FC<{
 
         <button
           type="button"
-          onClick={() => onNavigate('asisten')}
+          onClick={() => onNavigate('laporan')}
           className="p-3 rounded-2xl bg-white border border-stone-200 hover:border-brand-500 hover:shadow-xs text-left transition flex items-center gap-2.5 group"
         >
           <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center shrink-0 group-hover:bg-purple-600 group-hover:text-white transition">
-            <Bot className="w-4 h-4" />
+            <FileText className="w-4 h-4" />
           </div>
           <div>
-            <p className="font-extrabold text-xs text-stone-900 leading-tight">Tanya Asisten</p>
-            <p className="text-[10px] text-stone-500">Konsultasi AI</p>
+            <p className="font-extrabold text-xs text-stone-900 leading-tight">Laporan Musdes</p>
+            <p className="text-[10px] text-stone-500">Cetak 1 Halaman A4</p>
           </div>
         </button>
       </div>

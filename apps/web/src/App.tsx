@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Bell, Bot, FileText, Home, Layers, LogOut, Package, Settings, Sliders, Sprout, Truck, Utensils,
+  Bell, FileText, Home, LogOut, Package, Settings, Sprout, Truck,
 } from 'lucide-react';
 import {
   apiRequest, isOfflineNow, setSimulatedOffline, subscribeNetworkChange, syncOfflineQueueNow,
@@ -10,23 +10,20 @@ import { OfflineBanner } from './components/common/Primitives';
 import { StockOpnameModal, StockTransactionSheet } from './features/StockSheet';
 import { DashboardView, LoginView, PublicReportView, StockView } from './features/CoreViews';
 import {
-  AssistantView, NutritionMenuView, PredictAndGlobalView, ReportView, SimulatorView, VillageNetworkView,
+  PredictAndGlobalView, ReportView, VillageNetworkView,
 } from './features/AdvancedViews';
 import { AlertsListView, SettingsAndDemoView } from './features/AlertsAndSettingsView';
 
 type Tab =
-  | 'beranda' | 'stok' | 'peringatan' | 'simulasi' | 'prediksi'
-  | 'menu' | 'jaringan' | 'asisten' | 'laporan' | 'pengaturan';
+  | 'beranda' | 'stok' | 'peringatan' | 'prediksi'
+  | 'jaringan' | 'laporan' | 'pengaturan';
 
 const NAV: Array<{ id: Tab; label: string; icon: any }> = [
   { id: 'beranda', label: 'Beranda', icon: Home },
   { id: 'stok', label: 'Stok', icon: Package },
   { id: 'peringatan', label: 'Peringatan', icon: Bell },
-  { id: 'simulasi', label: 'Simulasi', icon: Sliders },
   { id: 'prediksi', label: 'Prediksi', icon: Sprout },
-  { id: 'menu', label: 'Menu Gizi', icon: Utensils },
   { id: 'jaringan', label: 'Desa', icon: Truck },
-  { id: 'asisten', label: 'Asisten', icon: Bot },
   { id: 'laporan', label: 'Laporan', icon: FileText },
   { id: 'pengaturan', label: 'Lainnya', icon: Settings },
 ];
@@ -132,11 +129,8 @@ const App: React.FC = () => {
           <StockView overview={overview} warehouses={warehouses} onOpenSheet={openSheet} onOpname={setOpnameComm} />
         )}
         {tab === 'peringatan' && <AlertsListView onNavigate={go} onRefreshOverview={refresh} />}
-        {tab === 'simulasi' && <SimulatorView onNavigate={go} />}
         {tab === 'prediksi' && <PredictAndGlobalView commodities={comms} onRefreshOverview={refresh} onNavigate={go} />}
-        {tab === 'menu' && <NutritionMenuView onRefreshOverview={refresh} />}
         {tab === 'jaringan' && <VillageNetworkView offline={offline} onRefreshOverview={refresh} />}
-        {tab === 'asisten' && <AssistantView offline={offline} />}
         {tab === 'laporan' && <ReportView />}
         {tab === 'pengaturan' && <SettingsAndDemoView commodities={comms} onRefreshOverview={refresh} onNavigate={go} />}
       </main>

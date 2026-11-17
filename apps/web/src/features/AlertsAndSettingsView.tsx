@@ -51,9 +51,8 @@ export const AlertsListView: React.FC<{
   };
 
   const handleActionClick = (tindakan: string) => {
-    if (tindakan === 'jalankan_simulasi') onNavigate('simulasi');
+    if (tindakan === 'jalankan_simulasi') onNavigate('prediksi');
     else if (tindakan === 'lihat_bantuan') onNavigate('jaringan');
-    else if (tindakan === 'buat_menu_substitusi') onNavigate('menu');
     else onNavigate('stok');
   };
 
@@ -138,10 +137,10 @@ export const AlertsListView: React.FC<{
                     className="min-h-[42px] px-4 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-xs font-bold"
                   >
                     {a.tindakan === 'jalankan_simulasi'
-                      ? 'Jalankan Simulasi Guncangan'
+                      ? 'Lihat Prediksi Panen'
                       : a.tindakan === 'lihat_bantuan'
                       ? 'Lihat Opsi Bantuan Desa'
-                      : 'Buat Menu Substitusi Lokal'}
+                      : 'Periksa Stok Komoditas'}
                   </button>
                 </div>
 

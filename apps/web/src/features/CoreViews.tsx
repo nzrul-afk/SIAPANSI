@@ -169,7 +169,7 @@ export const DashboardView: React.FC<{
                 Data As-Of: {overview.as_of ? formatTanggalIndo(overview.as_of) : '12 Nov 2026'}
               </span>
             </div>
-            <h1 className="text-xl font-extrabold mt-1">Desa Sidomulyo</h1>
+            <h1 className="text-xl font-extrabold mt-1">Desa Sumber Rejo</h1>
             <p className="text-xs text-brand-200">Kecamatan Ngantang · Kabupaten Malang</p>
           </div>
           <div className="flex items-center gap-1 bg-white/10 backdrop-blur-xs px-3 py-1.5 rounded-xl border border-white/15">

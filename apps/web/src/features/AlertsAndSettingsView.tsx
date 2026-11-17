@@ -439,7 +439,7 @@ export const SettingsAndDemoView: React.FC<{
             className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm space-y-4"
           >
             <h3 className="text-base font-extrabold text-stone-900">
-              Data Agregat Penduduk Desa Sidomulyo (Tanpa Identitas Pribadi / NIK)
+              Data Agregat Penduduk Desa Sumber Rejo (Tanpa Identitas Pribadi / NIK)
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {[

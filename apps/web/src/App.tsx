@@ -115,7 +115,7 @@ const App: React.FC = () => {
           <img src="/icon-192.svg" alt="" className="w-8 h-8 rounded-lg" />
           <div>
             <p className="font-extrabold leading-none">SIAPANSA</p>
-            <p className="text-[11px] opacity-80">Desa Sidomulyo</p>
+            <p className="text-[11px] opacity-80">Desa Sumber Rejo</p>
           </div>
         </div>
         <button type="button" onClick={logout} className="min-w-[48px] min-h-[48px] flex items-center justify-center rounded-lg hover:bg-brand-700" aria-label="Keluar">

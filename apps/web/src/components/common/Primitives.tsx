@@ -313,7 +313,7 @@ export const VillageClusterMap: React.FC<{
       <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950">
         <p className="font-semibold mb-1">Peta tidak ditampilkan saat offline</p>
         <p className="text-xs">
-          Ubin peta membutuhkan koneksi internet. Daftar status kedua desa (Desa Sidomulyo & Karangsari) tetap tersedia di bawah ini.
+          Ubin peta membutuhkan koneksi internet. Daftar status kedua desa (Desa Sumber Rejo & Tumpakrejo) tetap tersedia di bawah ini.
         </p>
       </div>
     );
@@ -348,7 +348,7 @@ export const VillageClusterMap: React.FC<{
       <div className="px-4 py-2.5 bg-white border-b border-stone-200 flex items-center justify-between text-xs">
         <span className="font-semibold text-stone-800 flex items-center gap-1.5">
           <MapPin className="w-4 h-4 text-brand-700" />
-          Peta Jaringan Antar-Desa (Desa Sidomulyo & Karangsari)
+          Peta Jaringan Antar-Desa (Desa Sumber Rejo & Tumpakrejo)
         </span>
         <span className="text-stone-500">Ketuk penanda desa untuk melihat rincian stok</span>
       </div>
@@ -357,7 +357,7 @@ export const VillageClusterMap: React.FC<{
         viewBox="0 0 600 290"
         className="w-full h-64 bg-[#eef6ee]"
         role="img"
-        aria-label="Peta sebaran 2 desa (Desa Sidomulyo & Karangsari) beserta jalur distribusi pangan"
+        aria-label="Peta sebaran 2 desa (Desa Sumber Rejo & Tumpakrejo) beserta jalur distribusi pangan"
       >
         <g stroke="#d6e6d6" strokeWidth="1">
           {[50, 100, 150, 200, 250].map((y) => (

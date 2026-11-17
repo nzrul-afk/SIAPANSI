@@ -288,10 +288,10 @@ const INITIAL_OVERVIEW = {
 };
 
 const GOLDEN_WAREHOUSES = [
-  { id: 'wh-lumbung', village_id: 'v-sidomulyo', nama: 'Lumbung Pangan Desa', sumber: 'lumbung', share: 0.35 },
-  { id: 'wh-poktan', village_id: 'v-sidomulyo', nama: 'Gudang Kelompok Tani', sumber: 'kelompok_tani', share: 0.25 },
-  { id: 'wh-rt', village_id: 'v-sidomulyo', nama: 'Estimasi Cadangan Rumah Tangga', sumber: 'rumah_tangga', share: 0.30 },
-  { id: 'wh-pedagang', village_id: 'v-sidomulyo', nama: 'Stok Pedagang Desa', sumber: 'pedagang', share: 0.10 },
+  { id: 'wh-lumbung', village_id: 'v-sumberrejo', nama: 'Lumbung Pangan Desa', sumber: 'lumbung', share: 0.35 },
+  { id: 'wh-poktan', village_id: 'v-sumberrejo', nama: 'Gudang Kelompok Tani', sumber: 'kelompok_tani', share: 0.25 },
+  { id: 'wh-rt', village_id: 'v-sumberrejo', nama: 'Estimasi Cadangan Rumah Tangga', sumber: 'rumah_tangga', share: 0.30 },
+  { id: 'wh-pedagang', village_id: 'v-sumberrejo', nama: 'Stok Pedagang Desa', sumber: 'pedagang', share: 0.10 },
 ];
 
 let stateOverview = JSON.parse(JSON.stringify(INITIAL_OVERVIEW));
@@ -355,10 +355,10 @@ let stateHarvestPlans = [
 let stateMyTransfers: Array<any> = [
   {
     id: 'trf-1',
-    dari_village_id: 'v-karangsari',
-    dari_village_nama: 'Desa Karangsari',
-    ke_village_id: 'v-sidomulyo',
-    ke_village_nama: 'Desa Sidomulyo (Kita)',
+    dari_village_id: 'v-tumpakrejo',
+    dari_village_nama: 'Desa Tumpakrejo',
+    ke_village_id: 'v-sumberrejo',
+    ke_village_nama: 'Desa Sumber Rejo (Kita)',
     commodity_id: 'c-kedelai',
     commodity_nama: 'Kedelai',
     satuan: 'kg',
@@ -366,7 +366,7 @@ let stateMyTransfers: Array<any> = [
     jarak_km: 4.2,
     biaya_angkut: 44100,
     status: 'Diajukan',
-    draf_pesan: 'Mohon dukungan pasokan cadangan kedelai 350 kg untuk pemenuhan gizi balita Sidomulyo.',
+    draf_pesan: 'Mohon dukungan pasokan cadangan kedelai 350 kg untuk pemenuhan gizi balita Sumber Rejo.',
     created_at: '2026-11-12T08:30:00',
   },
 ];
@@ -374,16 +374,16 @@ let stateMyTransfers: Array<any> = [
 let stateIncomingTransfers: Array<any> = [
   {
     id: 'trf-in-1',
-    dari_village_id: 'v-sidomulyo',
-    dari_village_nama: 'Desa Sidomulyo (Kita)',
-    ke_village_id: 'v-karangsari',
-    ke_village_nama: 'Desa Karangsari',
+    dari_village_id: 'v-sumberrejo',
+    dari_village_nama: 'Desa Sumber Rejo (Kita)',
+    ke_village_id: 'v-tumpakrejo',
+    ke_village_nama: 'Desa Tumpakrejo',
     commodity_id: 'c-beras',
     commodity_nama: 'Beras',
     satuan: 'kg',
     jumlah: 300.0,
     status: 'Diajukan',
-    draf_pesan: 'Permohonan pinjam cadangan beras 300 kg dari Lumbung Desa Sidomulyo untuk kebutuhan cadangan darurat Desa Karangsari.',
+    draf_pesan: 'Permohonan pinjam cadangan beras 300 kg dari Lumbung Desa Sumber Rejo untuk kebutuhan cadangan darurat Desa Tumpakrejo.',
     doc_desa_kita_sebelum: 38.0,
     doc_desa_kita_sesudah: 37.3,
     aman_untuk_disetujui: true,
@@ -519,14 +519,14 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
       expires_at: '2026-11-20T08:00:00',
       user: {
         id: 'u-petugas-1',
-        nama: 'Petugas Desa Sidomulyo',
+        nama: 'Petugas Desa Sumber Rejo',
         email: 'petugas@siapansa.demo',
         role: 'petugas',
-        village_id: 'v-sidomulyo',
+        village_id: 'v-sumberrejo',
       },
       village: {
-        id: 'v-sidomulyo',
-        nama: 'Desa Sidomulyo',
+        id: 'v-sumberrejo',
+        nama: 'Desa Sumber Rejo',
         kecamatan: 'Sumbermulyo',
         kabupaten: 'Kabupaten Malang',
         jumlah_penduduk: 1800,
@@ -609,7 +609,7 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
           jenis: 'masuk_panen',
           jumlah: Math.round(comm.kebutuhan_harian * 5),
           satuan: comm.satuan,
-          catatan: 'Panen petani lokal Desa Sidomulyo',
+          catatan: 'Panen petani lokal Desa Sumber Rejo',
         },
         {
           id: `tx-${Date.now()}-2`,
@@ -1075,7 +1075,7 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
       rekomendasi.push({
         prioritas: pIdx++,
         judul: 'Substitusi Pangan Impor ke Pangan Lokal Desa',
-        tindakan: 'Alihkan konsumsi terigu ke olahan singkong (mocaf) dan jagung lokal Desa Sidomulyo untuk menekan ketergantungan pasokan impor.',
+        tindakan: 'Alihkan konsumsi terigu ke olahan singkong (mocaf) dan jagung lokal Desa Sumber Rejo untuk menekan ketergantungan pasokan impor.',
       });
     }
     if (totalBiayaTambahan > 0) {
@@ -1089,7 +1089,7 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
       rekomendasi.push({
         prioritas: pIdx++,
         judul: `Pengajuan Bantuan Lumbung Donor untuk ${weakestComm?.nama || 'Komoditas Terlemah'}`,
-        tindakan: `Ajukan transfer pasokan lumbung antar-desa ke Desa Karangsari yang memiliki cadangan aman surplus di atas 21 hari.`,
+        tindakan: `Ajukan transfer pasokan lumbung antar-desa ke Desa Tumpakrejo yang memiliki cadangan aman surplus di atas 21 hari.`,
       });
     }
     if (dH > 0.1) {
@@ -1441,7 +1441,7 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
     });
 
     const substitusiList = [
-      '100% Bebas Terigu Impor: Olahan karbohidrat menggunakan Singkong (Mocaf), Ubi Jalar, dan Jagung Pipil lokal Desa Sidomulyo.',
+      '100% Bebas Terigu Impor: Olahan karbohidrat menggunakan Singkong (Mocaf), Ubi Jalar, dan Jagung Pipil lokal Desa Sumber Rejo.',
       'Substitusi Protein Mandiri: Mengutamakan Telur ayam peternak lokal, Ikan Lele kolam desa, dan Olahan Tempe/Tahu lumbung.',
     ];
 
@@ -1496,8 +1496,8 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
 
     const villagesList = [
       {
-        id: 'v-sidomulyo',
-        nama: 'Desa Sidomulyo',
+        id: 'v-sumberrejo',
+        nama: 'Desa Sumber Rejo',
         is_own: true,
         penduduk: 1800,
         catatan_peran: 'Desa Kita (Pertanian Padi & Lumbung)',
@@ -1508,8 +1508,8 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
         hari_bertahan_terburuk: stateOverview.titik_terlemah?.hari_bertahan || 14.5,
       },
       {
-        id: 'v-karangsari',
-        nama: 'Desa Karangsari',
+        id: 'v-tumpakrejo',
+        nama: 'Desa Tumpakrejo',
         is_own: false,
         penduduk: 1650,
         catatan_peran: 'Surplus Kedelai & Sentra Tahu Tempe (Kandidat Donor Kedelai)',
@@ -1537,10 +1537,10 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
       usulan_transfer: [
         {
           id: 'trf-usulan-1',
-          dari_village_id: 'v-karangsari',
-          dari_village_nama: 'Desa Karangsari',
-          ke_village_id: 'v-sidomulyo',
-          ke_village_nama: 'Desa Sidomulyo (Kita)',
+          dari_village_id: 'v-tumpakrejo',
+          dari_village_nama: 'Desa Tumpakrejo',
+          ke_village_id: 'v-sumberrejo',
+          ke_village_nama: 'Desa Sumber Rejo (Kita)',
           commodity_id: 'c-kedelai',
           commodity_nama: 'Kedelai',
           satuan: 'kg',
@@ -1551,16 +1551,16 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
           doc_donor_sesudah: 24.2,
           doc_penerima_sebelum: kedelaiComm.hari_bertahan,
           doc_penerima_sesudah: +(kedelaiComm.hari_bertahan + (350 / 90)).toFixed(1),
-          draf_pesan: 'Mohon izin mengajukan permohonan dukungan pinjam-pakai cadangan kedelai sebanyak 350 kg dari Lumbung Desa Karangsari untuk pemenuhan sasaran Posyandu dan PMT balita Desa Sidomulyo.',
-          dampak_doc: `Menaikkan cadangan kedelai Sidomulyo dari ${kedelaiComm.hari_bertahan} menjadi ${+(kedelaiComm.hari_bertahan + (350 / 90)).toFixed(1)} hari.`,
-          alasan: 'Karangsari memiliki surplus kedelai 32 hari (sisa 24,2 hari, aman di atas ambang donor 21 hari) dengan jarak terdekat 4,2 km.',
+          draf_pesan: 'Mohon izin mengajukan permohonan dukungan pinjam-pakai cadangan kedelai sebanyak 350 kg dari Lumbung Desa Tumpakrejo untuk pemenuhan sasaran Posyandu dan PMT balita Desa Sumber Rejo.',
+          dampak_doc: `Menaikkan cadangan kedelai Sumber Rejo dari ${kedelaiComm.hari_bertahan} menjadi ${+(kedelaiComm.hari_bertahan + (350 / 90)).toFixed(1)} hari.`,
+          alasan: 'Tumpakrejo memiliki surplus kedelai 32 hari (sisa 24,2 hari, aman di atas ambang donor 21 hari) dengan jarak terdekat 4,2 km.',
         },
         {
           id: 'trf-usulan-2',
-          dari_village_id: 'v-karangsari',
-          dari_village_nama: 'Desa Karangsari',
-          ke_village_id: 'v-sidomulyo',
-          ke_village_nama: 'Desa Sidomulyo (Kita)',
+          dari_village_id: 'v-tumpakrejo',
+          dari_village_nama: 'Desa Tumpakrejo',
+          ke_village_id: 'v-sumberrejo',
+          ke_village_nama: 'Desa Sumber Rejo (Kita)',
           commodity_id: 'c-terigu',
           commodity_nama: 'Terigu',
           satuan: 'kg',
@@ -1571,8 +1571,8 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
           doc_donor_sesudah: 21.0,
           doc_penerima_sebelum: teriguComm.hari_bertahan,
           doc_penerima_sesudah: +(teriguComm.hari_bertahan + (400 / 54)).toFixed(1),
-          draf_pesan: 'Bersama ini Pemerintah Desa Sidomulyo mengajukan permohonan transfer stok terigu 400 kg dari Desa Karangsari guna menstabilkan cadangan bahan pokok pangan desa.',
-          dampak_doc: `Menaikkan cadangan terigu Sidomulyo dari ${teriguComm.hari_bertahan} menjadi ${+(teriguComm.hari_bertahan + (400 / 54)).toFixed(1)} hari (mencapai status Aman).`,
+          draf_pesan: 'Bersama ini Pemerintah Desa Sumber Rejo mengajukan permohonan transfer stok terigu 400 kg dari Desa Tumpakrejo guna menstabilkan cadangan bahan pokok pangan desa.',
+          dampak_doc: `Menaikkan cadangan terigu Sumber Rejo dari ${teriguComm.hari_bertahan} menjadi ${+(teriguComm.hari_bertahan + (400 / 54)).toFixed(1)} hari (mencapai status Aman).`,
           alasan: 'Rute distribusi logistik antar-desa terdekat (4,2 km) dengan estimasi biaya angkut pickup Rp 50.400.',
         },
       ],
@@ -1630,10 +1630,10 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
     if (!target) {
       target = {
         id: `trf-${Date.now()}`,
-        dari_village_id: 'v-karangsari',
-        dari_village_nama: 'Desa Karangsari',
-        ke_village_id: 'v-sidomulyo',
-        ke_village_nama: 'Desa Sidomulyo (Kita)',
+        dari_village_id: 'v-tumpakrejo',
+        dari_village_nama: 'Desa Tumpakrejo',
+        ke_village_id: 'v-sumberrejo',
+        ke_village_nama: 'Desa Sumber Rejo (Kita)',
         commodity_id: 'c-kedelai',
         commodity_nama: 'Kedelai',
         satuan: 'kg',
@@ -1641,7 +1641,7 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
         jarak_km: 4.2,
         biaya_angkut: 44100,
         status: 'Diajukan',
-        draf_pesan: 'Mohon dukungan pasokan cadangan kedelai 350 kg untuk pemenuhan gizi balita Sidomulyo.',
+        draf_pesan: 'Mohon dukungan pasokan cadangan kedelai 350 kg untuk pemenuhan gizi balita Sumber Rejo.',
         created_at: new Date().toISOString(),
       };
       stateMyTransfers.unshift(target);
@@ -1656,7 +1656,7 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
 
     return {
       status: 'sukses',
-      pesan: `Permintaan transfer bantuan disetujui donor (${target.dari_village_nama}). Cadangan ${target.commodity_nama} Desa Sidomulyo bertambah ${target.jumlah} ${target.satuan || 'kg'}.`,
+      pesan: `Permintaan transfer bantuan disetujui donor (${target.dari_village_nama}). Cadangan ${target.commodity_nama} Desa Sumber Rejo bertambah ${target.jumlah} ${target.satuan || 'kg'}.`,
     };
   }
 
@@ -1669,37 +1669,37 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
     const weakest = stateOverview.titik_terlemah ?? { nama: 'Kedelai', hari_bertahan: 14.5, status: 'Waspada' };
     let toolSummary = {
       tool: 'get_status',
-      label: 'Engine Ketahanan Pangan Desa Sidomulyo',
+      label: 'Engine Ketahanan Pangan Desa Sumber Rejo',
       ringkasan_data: { status: stateOverview.pool_pokok?.status || 'Aman', doc_pokok: pokokDays, doc_protein: protDays, titik_terlemah: `${weakest.nama} (${weakest.hari_bertahan} hr)` },
     };
 
     if (q.includes('terigu') && (q.includes('60') || q.includes('krisis') || q.includes('impor') || q.includes('guncangan'))) {
       const terigu = stateOverview.komoditas.find((c: any) => c.id === 'c-terigu') || { stok_efektif: 810, hari_bertahan: 15.0 };
       const shockDays = +(terigu.hari_bertahan * 0.4).toFixed(1);
-      reply = `Bila impor gandum terganggu 60%, cadangan terigu Desa Sidomulyo (saat ini ${formatAngka(terigu.stok_efektif, 0)} kg) anjlok menjadi ${shockDays} hari bertahan (Status: Siaga). Disarankan substitusi menggunakan tepung mocaf singkong dan jagung lokal.`;
+      reply = `Bila impor gandum terganggu 60%, cadangan terigu Desa Sumber Rejo (saat ini ${formatAngka(terigu.stok_efektif, 0)} kg) anjlok menjadi ${shockDays} hari bertahan (Status: Siaga). Disarankan substitusi menggunakan tepung mocaf singkong dan jagung lokal.`;
       toolSummary = { tool: 'simulate_shock', label: 'Engine Simulasi Guncangan (F6)', ringkasan_data: { shock: 'Impor -60%', doc_baru: shockDays, status: 'Siaga' } };
     } else if (q.includes('kedelai') && (q.includes('bantu') || q.includes('desa') || q.includes('donor') || q.includes('transfer'))) {
-      reply = `Berdasarkan optimasi jaringan gugus desa, Desa Karangsari memiliki cadangan kedelai 32,0 hari (surplus 11 hari di atas batas donor 21 hari). Anda dapat mengajukan transfer bantuan 350 kg kedelai dengan jarak angkut 4,2 km.`;
-      toolSummary = { tool: 'optimize_distribution', label: 'Optimasi Jaringan Gugus Desa (F10)', ringkasan_data: { donor: 'Desa Karangsari', volume_kg: 350, doc_donor: 32.0, jarak_km: 4.2 } };
+      reply = `Berdasarkan optimasi jaringan gugus desa, Desa Tumpakrejo memiliki cadangan kedelai 32,0 hari (surplus 11 hari di atas batas donor 21 hari). Anda dapat mengajukan transfer bantuan 350 kg kedelai dengan jarak angkut 4,2 km.`;
+      toolSummary = { tool: 'optimize_distribution', label: 'Optimasi Jaringan Gugus Desa (F10)', ringkasan_data: { donor: 'Desa Tumpakrejo', volume_kg: 350, doc_donor: 32.0, jarak_km: 4.2 } };
     } else if (q.includes('menu') || q.includes('pmt') || q.includes('balita') || q.includes('resep')) {
       reply = `Telah disusun menu PMT 7 hari tanpa terigu berbasis jagung, tempe bacem, dan bayam kelor lokal. Total biaya rata-rata Rp 5.950 per porsi dengan pemenuhan 101,8% energi dan 136,7% protein AKG balita.`;
       toolSummary = { tool: 'optimize_menu', label: 'Optimasi Menu Linear Programming (F9)', ringkasan_data: { prioritas: 'hindari_impor', biaya_porsi: 5950, persen_akg: '100%+' } };
     } else if (q.includes('panen') || q.includes('tanam') || q.includes('padi')) {
-      reply = `Model prediksi panen Machine Learning memperkirakan panen padi sawah Sidomulyo (12 ha varietas Inpari 32) pada 28 November 2026 menghasilkan estimasi 3.960 kg beras bersih (+8,8 hari cadangan desa).`;
+      reply = `Model prediksi panen Machine Learning memperkirakan panen padi sawah Sumber Rejo (12 ha varietas Inpari 32) pada 28 November 2026 menghasilkan estimasi 3.960 kg beras bersih (+8,8 hari cadangan desa).`;
       toolSummary = { tool: 'predict_yield', label: 'Prediksi Panen ML (F7)', ringkasan_data: { komoditas: 'Padi', estimasi_kg: 3960, tambah_doc: 8.8 } };
     } else if (q.includes('harga') || q.includes('pasar') || q.includes('inflasi')) {
       const topPrice = [...stateOverview.komoditas].sort((a: any, b: any) => b.harga_sekarang - a.harga_sekarang)[0];
-      reply = `Harga komoditas pangan lokal Sidomulyo terpantau stabil dengan skor eksposur pasar global ${stateOverview.skor_ketahanan?.skor_eksposur_global || 3.4}/10. Komoditas dengan harga tertinggi saat ini adalah ${topPrice?.nama || 'Cabai'} (Rp ${topPrice?.harga_sekarang?.toLocaleString('id-ID')}/${topPrice?.satuan}).`;
+      reply = `Harga komoditas pangan lokal Sumber Rejo terpantau stabil dengan skor eksposur pasar global ${stateOverview.skor_ketahanan?.skor_eksposur_global || 3.4}/10. Komoditas dengan harga tertinggi saat ini adalah ${topPrice?.nama || 'Cabai'} (Rp ${topPrice?.harga_sekarang?.toLocaleString('id-ID')}/${topPrice?.satuan}).`;
       toolSummary = { tool: 'price_signals', label: 'Sinyal Global & Harga Pasar (F8)', ringkasan_data: { eksposur: stateOverview.skor_ketahanan?.skor_eksposur_global, komoditas_tertinggi: topPrice?.nama } };
-    } else if (q.includes('karangsari') || q.includes('tetangga') || q.includes('mitra')) {
-      reply = `Desa Karangsari berada pada status Aman (surplus kedelai 32 hari). Karangsari telah mengajukan permohonan pinjam cadangan 300 kg beras ke lumbung Sidomulyo dan aman disetujui (sisa cadangan beras Sidomulyo tetap 37,3 hari di atas batas aman 21 hari).`;
-      toolSummary = { tool: 'cluster_status', label: 'Jaringan Antar-Desa (F10)', ringkasan_data: { desa: 'Karangsari', status: 'Aman', permohonan: '300 kg Beras' } };
+    } else if (q.includes('tumpakrejo') || q.includes('tetangga') || q.includes('mitra')) {
+      reply = `Desa Tumpakrejo berada pada status Aman (surplus kedelai 32 hari). Tumpakrejo telah mengajukan permohonan pinjam cadangan 300 kg beras ke lumbung Sumber Rejo dan aman disetujui (sisa cadangan beras Sumber Rejo tetap 37,3 hari di atas batas aman 21 hari).`;
+      toolSummary = { tool: 'cluster_status', label: 'Jaringan Antar-Desa (F10)', ringkasan_data: { desa: 'Tumpakrejo', status: 'Aman', permohonan: '300 kg Beras' } };
     } else if (q.includes('stok') || q.includes('beras') || q.includes('lumbung')) {
       const beras = stateOverview.komoditas.find((c: any) => c.id === 'c-beras') || { stok_efektif: 17100, hari_bertahan: 38.0 };
-      reply = `Stok efektif beras Desa Sidomulyo saat ini mencapai ${formatAngka(beras.stok_efektif, 0)} kg, cukup untuk ${formatAngka(beras.hari_bertahan, 1)} hari konsumsi warga (Status: Aman di atas target 30 hari).`;
+      reply = `Stok efektif beras Desa Sumber Rejo saat ini mencapai ${formatAngka(beras.stok_efektif, 0)} kg, cukup untuk ${formatAngka(beras.hari_bertahan, 1)} hari konsumsi warga (Status: Aman di atas target 30 hari).`;
       toolSummary = { tool: 'get_commodity_stock', label: 'Inventarisasi Lumbung (F2)', ringkasan_data: { komoditas: 'Beras', stok_kg: beras.stok_efektif, doc_hari: beras.hari_bertahan } };
     } else {
-      reply = `Hari ini ketahanan pangan pokok Desa Sidomulyo mampu bertahan ${pokokDays} hari (${stateOverview.pool_pokok?.status || 'Aman'}, target ${stateOverview.target_hari || 30} hari). Cadangan protein bertahan ${protDays} hari. Titik terlemah berada pada ${weakest.nama} (${weakest.hari_bertahan} hari) yang membutuhkan pemantauan ketat.`;
+      reply = `Hari ini ketahanan pangan pokok Desa Sumber Rejo mampu bertahan ${pokokDays} hari (${stateOverview.pool_pokok?.status || 'Aman'}, target ${stateOverview.target_hari || 30} hari). Cadangan protein bertahan ${protDays} hari. Titik terlemah berada pada ${weakest.nama} (${weakest.hari_bertahan} hari) yang membutuhkan pemantauan ketat.`;
       toolSummary = { tool: 'get_status', label: 'Status Cadangan FEFO (F2)', ringkasan_data: { doc_pokok: pokokDays, doc_protein: protDays, terlemah: `${weakest.nama} (${weakest.hari_bertahan} hr)` } };
     }
 
@@ -1721,21 +1721,21 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
     const weakest = stateOverview.titik_terlemah ?? { nama: 'Kedelai', hari_bertahan: 14.5, status: 'Waspada' };
     const skor = stateOverview.skor_ketahanan?.skor_total ?? 77.8;
 
-    let narrative = `Berdasarkan inventarisasi stok per ${todayStr}, cadangan pangan pokok Desa Sidomulyo mampu bertahan selama ${pokokDays} hari (Status: ${stateOverview.pool_pokok?.status || 'Aman'}). Cadangan protein mampu bertahan ${protDays} hari. Titik terlemah berada pada komoditas ${weakest.nama} (${weakest.hari_bertahan} hari bertahan, Status: ${weakest.status}), yang memerlukan prioritas penguatan cadangan lumbung atau substitusi pangan lokal.`;
+    let narrative = `Berdasarkan inventarisasi stok per ${todayStr}, cadangan pangan pokok Desa Sumber Rejo mampu bertahan selama ${pokokDays} hari (Status: ${stateOverview.pool_pokok?.status || 'Aman'}). Cadangan protein mampu bertahan ${protDays} hari. Titik terlemah berada pada komoditas ${weakest.nama} (${weakest.hari_bertahan} hari bertahan, Status: ${weakest.status}), yang memerlukan prioritas penguatan cadangan lumbung atau substitusi pangan lokal.`;
 
     if (p === 7) {
       narrative = `Evaluasi Kesiapsiagaan Darurat 7 Hari: Cadangan pangan pokok desa berada pada level ${pokokDays} hari, melampaui ambang batas siaga 7 hari. Titik terlemah ${weakest.nama} (${weakest.hari_bertahan} hari) berada di atas batas kritis 72 jam namun memerlukan pemantauan harian berkala.`;
     } else if (p === 90) {
-      narrative = `Proyeksi Ketahanan Pangan Triwulan (90 Hari): Mempertimbangkan kalender tanam dan panen desa, cadangan pokok ${pokokDays} hari membutuhkan pasokan panen padi lokal musim mendatang. Alokasi transfer antar-desa Karangsari dan diversifikasi pangan non-terigu disarankan untuk mengamankan 90 hari ke depan.`;
+      narrative = `Proyeksi Ketahanan Pangan Triwulan (90 Hari): Mempertimbangkan kalender tanam dan panen desa, cadangan pokok ${pokokDays} hari membutuhkan pasokan panen padi lokal musim mendatang. Alokasi transfer antar-desa Tumpakrejo dan diversifikasi pangan non-terigu disarankan untuk mengamankan 90 hari ke depan.`;
     }
 
-    const shareSlug = `sidomulyo-${todayStr.replace(/-/g, '')}`;
+    const shareSlug = `sumberrejo-${todayStr.replace(/-/g, '')}`;
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://siapansi-nsxa.vercel.app';
     const fullShareUrl = `${baseUrl}/laporan-publik/${shareSlug}`;
 
     return {
       desa: {
-        nama: 'Desa Sidomulyo',
+        nama: 'Desa Sumber Rejo',
         kecamatan: 'Sumbermulyo',
         kabupaten: 'Kabupaten Malang',
         jumlah_penduduk: 1800,
@@ -1749,7 +1749,7 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
       skor_ketahanan: stateOverview.skor_ketahanan,
       komoditas: stateOverview.komoditas,
       tiga_risiko_utama: stateOverview.peringatan_teratas,
-      teks_whatsapp: `*LAPORAN KETAHANAN PANGAN DESA SIDOMULYO*\nTanggal: ${todayStr} (Periode ${p} Hari)\n\n• Cadangan Pokok: ${pokokDays} hari (${stateOverview.pool_pokok?.status || 'Aman'})\n• Cadangan Protein: ${protDays} hari (${stateOverview.pool_protein?.status || 'Waspada'})\n• Titik Terlemah: ${weakest.nama} (${weakest.hari_bertahan} hari)\n• Skor Ketahanan Desa: ${skor} / 100\n\nRingkasan:\n${narrative}\n\nBuka laporan resmi A4 publik di sini:\n${fullShareUrl}\n\n(Diterbitkan resmi oleh SIAPANSA — Musyawarah Desa Sidomulyo)`,
+      teks_whatsapp: `*LAPORAN KETAHANAN PANGAN DESA SUMBER REJO*\nTanggal: ${todayStr} (Periode ${p} Hari)\n\n• Cadangan Pokok: ${pokokDays} hari (${stateOverview.pool_pokok?.status || 'Aman'})\n• Cadangan Protein: ${protDays} hari (${stateOverview.pool_protein?.status || 'Waspada'})\n• Titik Terlemah: ${weakest.nama} (${weakest.hari_bertahan} hari)\n• Skor Ketahanan Desa: ${skor} / 100\n\nRingkasan:\n${narrative}\n\nBuka laporan resmi A4 publik di sini:\n${fullShareUrl}\n\n(Diterbitkan resmi oleh SIAPANSA — Musyawarah Desa Sumber Rejo)`,
     };
   }
 
@@ -1757,7 +1757,7 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
     const now = new Date();
     const exp = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     const todayStr = now.toISOString().split('T')[0];
-    const shareSlug = `sidomulyo-${todayStr.replace(/-/g, '')}`;
+    const shareSlug = `sumberrejo-${todayStr.replace(/-/g, '')}`;
     return {
       url_publik: `/laporan-publik/${shareSlug}`,
       expires_at: exp.toISOString(),
@@ -1774,14 +1774,14 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
     return {
       snapshot: {
         desa: {
-          nama: 'Desa Sidomulyo',
+          nama: 'Desa Sumber Rejo',
           kecamatan: 'Sumbermulyo',
           kabupaten: 'Kabupaten Malang',
           jumlah_penduduk: 1800,
         },
         periode_hari: 30,
         tanggal_cetak: todayStr,
-        ringkasan_naratif: `Laporan Publik Ketahanan Pangan Desa Sidomulyo: Cadangan pangan pokok desa bertahan ${pokokDays} hari dan protein bertahan ${protDays} hari jika pasokan dari luar terhenti. Situasi terkendali dengan prioritas pengawasan pada komoditas ${weakest.nama} (${weakest.hari_bertahan} hari).`,
+        ringkasan_naratif: `Laporan Publik Ketahanan Pangan Desa Sumber Rejo: Cadangan pangan pokok desa bertahan ${pokokDays} hari dan protein bertahan ${protDays} hari jika pasokan dari luar terhenti. Situasi terkendali dengan prioritas pengawasan pada komoditas ${weakest.nama} (${weakest.hari_bertahan} hari).`,
         pool_pokok: stateOverview.pool_pokok,
         pool_protein: stateOverview.pool_protein,
         titik_terlemah: stateOverview.titik_terlemah,
@@ -1885,10 +1885,10 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
     stateMyTransfers = [
       {
         id: 'trf-1',
-        dari_village_id: 'v-karangsari',
-        dari_village_nama: 'Desa Karangsari',
-        ke_village_id: 'v-sidomulyo',
-        ke_village_nama: 'Desa Sidomulyo (Kita)',
+        dari_village_id: 'v-tumpakrejo',
+        dari_village_nama: 'Desa Tumpakrejo',
+        ke_village_id: 'v-sumberrejo',
+        ke_village_nama: 'Desa Sumber Rejo (Kita)',
         commodity_id: 'c-kedelai',
         commodity_nama: 'Kedelai',
         satuan: 'kg',
@@ -1896,23 +1896,23 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
         jarak_km: 4.2,
         biaya_angkut: 44100,
         status: 'Diajukan',
-        draf_pesan: 'Mohon dukungan pasokan cadangan kedelai 350 kg untuk pemenuhan gizi balita Sidomulyo.',
+        draf_pesan: 'Mohon dukungan pasokan cadangan kedelai 350 kg untuk pemenuhan gizi balita Sumber Rejo.',
         created_at: '2026-11-12T08:30:00',
       },
     ];
     stateIncomingTransfers = [
       {
         id: 'trf-in-1',
-        dari_village_id: 'v-sidomulyo',
-        dari_village_nama: 'Desa Sidomulyo (Kita)',
-        ke_village_id: 'v-karangsari',
-        ke_village_nama: 'Desa Karangsari',
+        dari_village_id: 'v-sumberrejo',
+        dari_village_nama: 'Desa Sumber Rejo (Kita)',
+        ke_village_id: 'v-tumpakrejo',
+        ke_village_nama: 'Desa Tumpakrejo',
         commodity_id: 'c-beras',
         commodity_nama: 'Beras',
         satuan: 'kg',
         jumlah: 300.0,
         status: 'Diajukan',
-        draf_pesan: 'Permohonan pinjam cadangan beras 300 kg dari Lumbung Desa Sidomulyo untuk kebutuhan cadangan darurat Desa Karangsari.',
+        draf_pesan: 'Permohonan pinjam cadangan beras 300 kg dari Lumbung Desa Sumber Rejo untuk kebutuhan cadangan darurat Desa Tumpakrejo.',
         doc_desa_kita_sebelum: 38.0,
         doc_desa_kita_sesudah: 37.3,
         aman_untuk_disetujui: true,

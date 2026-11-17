@@ -1641,7 +1641,7 @@ export const VillageNetworkView: React.FC<{
               </p>
               <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-xs flex flex-wrap justify-between gap-2">
                 <span>
-                  Pemeriksaan Batas Aman Donor (≥ 21 hari): Cadangan {tr.commodity_nama} Desa Sidomulyo{' '}
+                  Pemeriksaan Batas Aman Donor (≥ 21 hari): Cadangan {tr.commodity_nama} Desa Sumber Rejo{' '}
                   <strong>{formatAngka(tr.doc_desa_kita_sebelum, 1)} hari</strong> → setelah kirim{' '}
                   <strong>{formatAngka(tr.doc_desa_kita_sesudah, 1)} hari</strong>.
                 </span>
@@ -1684,7 +1684,7 @@ export const AssistantView: React.FC<{ offline: boolean }> = ({ offline }) => {
     {
       role: 'assistant',
       jawaban:
-        'Halo Pak Joko! Saya Asisten SIAPANSA Desa Sidomulyo. Silakan pilih pertanyaan cepat di bawah atau ketik pertanyaan Anda tentang stok, simulasi krisis, menu PMT, atau bantuan antar desa.',
+        'Halo Pak Joko! Saya Asisten SIAPANSA Desa Sumber Rejo. Silakan pilih pertanyaan cepat di bawah atau ketik pertanyaan Anda tentang stok, simulasi krisis, menu PMT, atau bantuan antar desa.',
       dasar_jawaban: [{ tool: 'get_status', label: 'Data Engine Deterministik SIAPANSA' }],
     },
   ]);
@@ -2111,11 +2111,11 @@ export const ReportView: React.FC = () => {
         {/* Tanda Tangan Musyawarah Desa */}
         <div className="pt-6 border-t border-stone-200 grid grid-cols-3 gap-4 text-center text-xs text-stone-800">
           <div className="space-y-12">
-            <p className="font-semibold text-stone-600">Mengetahui,<br /><span className="font-bold text-stone-900">Kepala Desa Sidomulyo</span></p>
+            <p className="font-semibold text-stone-600">Mengetahui,<br /><span className="font-bold text-stone-900">Kepala Desa Sumber Rejo</span></p>
             <p className="font-bold underline text-stone-900">( H. Bambang Sutrisno )</p>
           </div>
           <div className="space-y-12">
-            <p className="font-semibold text-stone-600">Disetujui,<br /><span className="font-bold text-stone-900">Ketua BPD Sidomulyo</span></p>
+            <p className="font-semibold text-stone-600">Disetujui,<br /><span className="font-bold text-stone-900">Ketua BPD Sumber Rejo</span></p>
             <p className="font-bold underline text-stone-900">( Ir. Supriyadi )</p>
           </div>
           <div className="space-y-12">

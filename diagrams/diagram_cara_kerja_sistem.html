@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diagram Alur Cara Kerja Sistem SIAPANSA</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-6 min-h-screen">
+  <div class="max-w-5xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div>
+        <span class="inline-block bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider mb-2">SIAPANSA Documentation</span>
+        <h1 class="text-2xl font-black text-slate-900">Diagram Alur Cara Kerja Sistem</h1>
+        <p class="text-sm text-slate-500 mt-1">Diagram resmi untuk laporan/makalah "Digitalisasi Ketahanan Pangan Desa Berbasis AI"</p>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="diagram_alur_simple_horizontal_siapansa.png" download="diagram_alur_siapansa_horizontal.png" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition shadow-sm inline-flex items-center gap-2">
+          ⬇ Unduh PNG (300 DPI)
+        </a>
+      </div>
+    </div>
+
+    <!-- Toggle Buttons -->
+    <div class="flex items-center gap-2 border-b border-slate-200 pb-2">
+      <button onclick="showTab('horizontal')" id="tab-h" class="px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow-sm transition">
+        Opsi 1: Format Memanjang (Landscape)
+      </button>
+      <button onclick="showTab('vertical')" id="tab-v" class="px-4 py-2 text-xs font-bold rounded-lg bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 transition">
+        Opsi 2: Format Bertingkat (Portrait)
+      </button>
+    </div>
+
+    <!-- TAB HORIZONTAL -->
+    <div id="content-horizontal" class="space-y-4">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm overflow-x-auto">
+        <div class="min-w-[800px] w-full">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1260 480" width="1260" height="480">
+  <defs>
+    <style>
+      .title { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 20px; font-weight: 800; fill: #0f172a; text-anchor: middle; }
+      .subtitle { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 13px; fill: #64748b; text-anchor: middle; }
+      .badge-txt { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; fill: #ffffff; letter-spacing: 0.5px; }
+      .card-title { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 700; fill: #0f172a; }
+      .card-sub { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; fill: #64748b; }
+      .card-body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; fill: #334155; }
+      .card-body-b { font-weight: 700; }
+      .footer-txt { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 10.5px; font-weight: 600; }
+      .arrow { fill: #475569; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: central; }
+    </style>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-opacity="0.04" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1260" height="480" fill="#ffffff" rx="16" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- Header -->
+  <rect x="510" y="20" width="240" height="24" rx="12" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1"/>
+  <text x="620" y="36" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#065f46" text-anchor="middle" letter-spacing="1">CARA KERJA SISTEM SIAPANSA</text>
+  <text x="620" y="68" class="title">Diagram Alur Integrasi Ketahanan Pangan Desa</text>
+  <text x="620" y="88" class="subtitle">Dari Pencatatan Multikanal hingga Eksekusi Intervensi &amp; Logistik Antar-Desa</text>
+
+  <!-- CARD 1 -->
+  <g transform="translate(30, 115)">
+    <rect width="270" height="335" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="16" y="16" width="76" height="22" rx="6" fill="#334155"/>
+    <text x="24" y="31" class="badge-txt">TAHAP 01</text>
+    <text x="16" y="62" class="card-title">Input &amp; Pengumpulan Data</text>
+    <text x="16" y="80" class="card-sub">Pencatatan multikanal lumbung desa</text>
+    
+    <text x="16" y="112" class="card-body">
+      <tspan fill="#475569" font-weight="bold">• </tspan><tspan class="card-body-b">Stok Lumbung Desa:</tspan>
+      <tspan x="26" dy="16">Mutasi stok masuk &amp; keluar</tspan>
+      <tspan x="26" dy="15">(Online / Offline SQLite).</tspan>
+      
+      <tspan x="16" dy="26" fill="#475569" font-weight="bold">• </tspan><tspan class="card-body-b">Demografi Penduduk:</tspan>
+      <tspan x="26" dy="16">Jumlah jiwa &amp; standar</tspan>
+      <tspan x="26" dy="15">konsumsi AKG Kemenkes.</tspan>
+      
+      <tspan x="16" dy="26" fill="#475569" font-weight="bold">• </tspan><tspan class="card-body-b">Agregasi Data Luar:</tspan>
+      <tspan x="26" dy="16">Pantauan cuaca BMKG &amp;</tspan>
+      <tspan x="26" dy="15">fluktuasi harga pasar pangan.</tspan>
+    </text>
+
+    <line x1="16" y1="295" x2="254" y2="295" stroke="#e2e8f0" stroke-dasharray="3,3"/>
+    <text x="16" y="318" class="footer-txt" fill="#475569">Basis Data Siapansa</text>
+  </g>
+
+  <!-- ARROW 1 -> 2 -->
+  <circle cx="318" cy="282" r="14" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="318" y="282" class="arrow">➔</text>
+
+  <!-- CARD 2 -->
+  <g transform="translate(336, 115)">
+    <rect width="270" height="335" rx="14" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="16" y="16" width="76" height="22" rx="6" fill="#059669"/>
+    <text x="24" y="31" class="badge-txt">TAHAP 02</text>
+    <text x="16" y="62" class="card-title">Mesin Analisis AI &amp; EWS</text>
+    <text x="16" y="80" class="card-sub">Komputasi &amp; proyeksi prediktif</text>
+    
+    <text x="16" y="112" class="card-body">
+      <tspan fill="#059669" font-weight="bold">• </tspan><tspan class="card-body-b">Days of Coverage (DoC):</tspan>
+      <tspan x="26" dy="16">Hitung hari bertahan pangan</tspan>
+      <tspan x="26" dy="15">(Stok ÷ Kebutuhan/Hari).</tspan>
+      
+      <tspan x="16" dy="26" fill="#059669" font-weight="bold">• </tspan><tspan class="card-body-b">Kurasi Berita AI:</tspan>
+      <tspan x="26" dy="16">Analisis tren sentimen &amp;</tspan>
+      <tspan x="26" dy="15">korelasi harga komoditas.</tspan>
+      
+      <tspan x="16" dy="26" fill="#059669" font-weight="bold">• </tspan><tspan class="card-body-b">Skor Risiko &amp; Titik Lemah:</tspan>
+      <tspan x="26" dy="16">Deteksi dini potensi krisis &amp;</tspan>
+      <tspan x="26" dy="15">proyeksi tanggal stok habis.</tspan>
+    </text>
+
+    <line x1="16" y1="295" x2="254" y2="295" stroke="#a7f3d0" stroke-dasharray="3,3"/>
+    <text x="16" y="318" class="footer-txt" fill="#047857">Algoritma Analitis &amp; AI</text>
+  </g>
+
+  <!-- ARROW 2 -> 3 -->
+  <circle cx="624" cy="282" r="14" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="624" y="282" class="arrow">➔</text>
+
+  <!-- CARD 3 -->
+  <g transform="translate(642, 115)">
+    <rect width="270" height="335" rx="14" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="16" y="16" width="76" height="22" rx="6" fill="#2563eb"/>
+    <text x="24" y="31" class="badge-txt">TAHAP 03</text>
+    <text x="16" y="62" class="card-title">Dashboard &amp; Peringatan</text>
+    <text x="16" y="80" class="card-sub">Pusat visualisasi pengambil keputusan</text>
+    
+    <text x="16" y="112" class="card-body">
+      <tspan fill="#2563eb" font-weight="bold">• </tspan><tspan class="card-body-b">Status Ketahanan:</tspan>
+      <tspan x="26" dy="16">Indikator visual real-time</tspan>
+      <tspan x="26" dy="15">(Aman, Waspada, Kritis).</tspan>
+      
+      <tspan x="16" dy="26" fill="#2563eb" font-weight="bold">• </tspan><tspan class="card-body-b">Indeks Ketahanan (IKP):</tspan>
+      <tspan x="26" dy="16">Skor komposit gabungan</tspan>
+      <tspan x="26" dy="15">ketahanan pangan desa.</tspan>
+      
+      <tspan x="16" dy="26" fill="#2563eb" font-weight="bold">• </tspan><tspan class="card-body-b">Rekomendasi Cerdas:</tspan>
+      <tspan x="26" dy="16">Arahan taktis siap eksekusi</tspan>
+      <tspan x="26" dy="15">bagi Kepala Desa &amp; aparat.</tspan>
+    </text>
+
+    <line x1="16" y1="295" x2="254" y2="295" stroke="#bfdbfe" stroke-dasharray="3,3"/>
+    <text x="16" y="318" class="footer-txt" fill="#1d4ed8">Early Warning System (EWS)</text>
+  </g>
+
+  <!-- ARROW 3 -> 4 -->
+  <circle cx="930" cy="282" r="14" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="930" y="282" class="arrow">➔</text>
+
+  <!-- CARD 4 -->
+  <g transform="translate(948, 115)">
+    <rect width="270" height="335" rx="14" fill="#fefce8" stroke="#fde68a" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="16" y="16" width="76" height="22" rx="6" fill="#d97706"/>
+    <text x="24" y="31" class="badge-txt">TAHAP 04</text>
+    <text x="16" y="62" class="card-title">Aksi &amp; Logistik Desa</text>
+    <text x="16" y="80" class="card-sub">Intervensi terpadu lapangan</text>
+    
+    <text x="16" y="112" class="card-body">
+      <tspan fill="#d97706" font-weight="bold">• </tspan><tspan class="card-body-b">Operasi Pasar Murah:</tspan>
+      <tspan x="26" dy="16">Pengendalian harga &amp; pasokan</tspan>
+      <tspan x="26" dy="15">cadangan lumbung desa.</tspan>
+      
+      <tspan x="16" dy="26" fill="#d97706" font-weight="bold">• </tspan><tspan class="card-body-b">Kolaborasi Antar-Desa:</tspan>
+      <tspan x="26" dy="16">Barter surplus Beras (Desa</tspan>
+      <tspan x="26" dy="15">Sumber Rejo ↔ Sayur Tumpakrejo).</tspan>
+      
+      <tspan x="16" dy="26" fill="#d97706" font-weight="bold">• </tspan><tspan class="card-body-b">Stabilisasi Berkelanjutan:</tspan>
+      <tspan x="26" dy="16">Pemberantasan defisit lokal</tspan>
+      <tspan x="26" dy="15">tanpa ketergantungan luar.</tspan>
+    </text>
+
+    <line x1="16" y1="295" x2="254" y2="295" stroke="#fde68a" stroke-dasharray="3,3"/>
+    <text x="16" y="318" class="footer-txt" fill="#b45309">Eksekusi Lapangan &amp; Solusi</text>
+  </g>
+</svg>
+
+        </div>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-center justify-between">
+        <span>💡 <strong>Rekomendasi Word:</strong> Format ini paling bagus diletakkan melintang (Landscape) atau mengisi 1 lebar halaman penuh.</span>
+        <a href="diagram_alur_simple_horizontal_siapansa.png" target="_blank" class="text-emerald-600 hover:underline font-bold">Buka file PNG resolusi penuh ➔</a>
+      </div>
+    </div>
+
+    <!-- TAB VERTICAL -->
+    <div id="content-vertical" class="space-y-4 hidden">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex justify-center">
+        <div class="max-w-[740px] w-full">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 920" width="740" height="920">
+  <defs>
+    <style>
+      .title { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 21px; font-weight: 800; fill: #0f172a; text-anchor: middle; }
+      .subtitle { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 13px; fill: #64748b; text-anchor: middle; }
+      .badge-txt { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; fill: #ffffff; letter-spacing: 0.5px; }
+      .card-title { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 700; fill: #0f172a; }
+      .card-sub { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; fill: #64748b; }
+      .card-body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; fill: #334155; }
+      .card-body-b { font-weight: 700; }
+      .arrow { fill: #475569; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: central; }
+    </style>
+    <filter id="shadow" x="-3%" y="-5%" width="106%" height="110%">
+      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-opacity="0.04" />
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="740" height="920" fill="#ffffff" rx="16" stroke="#e2e8f0" stroke-width="1.5"/>
+
+  <!-- Header -->
+  <rect x="250" y="22" width="240" height="24" rx="12" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1"/>
+  <text x="370" y="38" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#065f46" text-anchor="middle" letter-spacing="1">CARA KERJA SISTEM SIAPANSA</text>
+  <text x="370" y="70" class="title">Diagram Alur Integrasi Ketahanan Pangan Desa</text>
+  <text x="370" y="90" class="subtitle">Pencatatan Multikanal ➔ Mesin AI ➔ Dashboard EWS ➔ Logistik Antar-Desa</text>
+
+  <!-- CARD 1 -->
+  <g transform="translate(35, 115)">
+    <rect width="670" height="150" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="20" y="20" width="80" height="24" rx="6" fill="#334155"/>
+    <text x="28" y="36" class="badge-txt">TAHAP 01</text>
+    
+    <text x="120" y="36" class="card-title">Input &amp; Pengumpulan Data Lumbung</text>
+    <text x="120" y="54" class="card-sub">Pencatatan multikanal lumbung desa</text>
+
+    <text x="120" y="80" class="card-body">
+      <tspan fill="#475569" font-weight="bold">• </tspan><tspan class="card-body-b">Stok Lumbung Desa:</tspan> Pencatatan mutasi pangan masuk/keluar (Online / Offline SQLite).
+      <tspan x="120" dy="20" fill="#475569" font-weight="bold">• </tspan><tspan class="card-body-b">Demografi Penduduk:</tspan> Jumlah jiwa desa &amp; standar konsumsi AKG Kemenkes RI.
+      <tspan x="120" dy="20" fill="#475569" font-weight="bold">• </tspan><tspan class="card-body-b">Agregasi Data Eksternal:</tspan> Integrasi data cuaca BMKG &amp; fluktuasi harga pasar komoditas.
+    </text>
+  </g>
+
+  <!-- ARROW 1 -> 2 -->
+  <circle cx="370" cy="285" r="14" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="370" y="285" class="arrow">▼</text>
+
+  <!-- CARD 2 -->
+  <g transform="translate(35, 305)">
+    <rect width="670" height="150" rx="12" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="20" y="20" width="80" height="24" rx="6" fill="#059669"/>
+    <text x="28" y="36" class="badge-txt">TAHAP 02</text>
+    
+    <text x="120" y="36" class="card-title">Mesin Analisis AI &amp; EWS</text>
+    <text x="120" y="54" class="card-sub">Komputasi &amp; proyeksi prediktif ketahanan pangan</text>
+
+    <text x="120" y="80" class="card-body">
+      <tspan fill="#059669" font-weight="bold">• </tspan><tspan class="card-body-b">Days of Coverage (DoC):</tspan> Menghitung daya tahan stok pangan (Stok ÷ Kebutuhan Harian).
+      <tspan x="120" dy="20" fill="#059669" font-weight="bold">• </tspan><tspan class="card-body-b">Analisis Berita AI:</tspan> Kurasi berita pasar &amp; sintesis dampak risiko pangan lokal secara otomatis.
+      <tspan x="120" dy="20" fill="#059669" font-weight="bold">• </tspan><tspan class="card-body-b">Deteksi Dini Kerentanan:</tspan> Identifikasi titik terlemah lumbung &amp; estimasi tanggal stok kritis.
+    </text>
+  </g>
+
+  <!-- ARROW 2 -> 3 -->
+  <circle cx="370" cy="475" r="14" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="370" y="475" class="arrow">▼</text>
+
+  <!-- CARD 3 -->
+  <g transform="translate(35, 495)">
+    <rect width="670" height="150" rx="12" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="20" y="20" width="80" height="24" rx="6" fill="#2563eb"/>
+    <text x="28" y="36" class="badge-txt">TAHAP 03</text>
+    
+    <text x="120" y="36" class="card-title">Dashboard &amp; Peringatan Dini</text>
+    <text x="120" y="54" class="card-sub">Pusat visualisasi pengambil keputusan pemerintah desa</text>
+
+    <text x="120" y="80" class="card-body">
+      <tspan fill="#2563eb" font-weight="bold">• </tspan><tspan class="card-body-b">Status Pangan Real-Time:</tspan> Label visual status pangan desa (Aman, Waspada, atau Kritis).
+      <tspan x="120" dy="20" fill="#2563eb" font-weight="bold">• </tspan><tspan class="card-body-b">Indeks Ketahanan (IKP):</tspan> Skor komposit ketahanan pangan desa berbasis indikator terpadu.
+      <tspan x="120" dy="20" fill="#2563eb" font-weight="bold">• </tspan><tspan class="card-body-b">Rekomendasi Kebijakan:</tspan> Arahan mitigasi taktis instan bagi Kepala Desa &amp; aparat desa.
+    </text>
+  </g>
+
+  <!-- ARROW 3 -> 4 -->
+  <circle cx="370" cy="665" r="14" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="370" y="665" class="arrow">▼</text>
+
+  <!-- CARD 4 -->
+  <g transform="translate(35, 685)">
+    <rect width="670" height="150" rx="12" fill="#fefce8" stroke="#fde68a" stroke-width="1.5" filter="url(#shadow)"/>
+    <rect x="20" y="20" width="80" height="24" rx="6" fill="#d97706"/>
+    <text x="28" y="36" class="badge-txt">TAHAP 04</text>
+    
+    <text x="120" y="36" class="card-title">Aksi Lapangan &amp; Logistik Antar-Desa</text>
+    <text x="120" y="54" class="card-sub">Eksekusi intervensi logistik pangan terpadu</text>
+
+    <text x="120" y="80" class="card-body">
+      <tspan fill="#d97706" font-weight="bold">• </tspan><tspan class="card-body-b">Intervensi Cadangan:</tspan> Operasi pasar murah &amp; penyaluran stok darurat lumbung desa.
+      <tspan x="120" dy="20" fill="#d97706" font-weight="bold">• </tspan><tspan class="card-body-b">Barter Bilateral Antar-Desa:</tspan> Surplus Beras Sumber Rejo ↔ Surplus Sayur Tumpakrejo.
+      <tspan x="120" dy="20" fill="#d97706" font-weight="bold">• </tspan><tspan class="card-body-b">Keseimbangan Wilayah:</tspan> Menjamin ketahanan pangan berkelanjutan tanpa kelangkaan.
+    </text>
+  </g>
+</svg>
+
+        </div>
+      </div>
+      <div class="bg-white p-4 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-center justify-between">
+        <span>💡 <strong>Rekomendasi Word:</strong> Format ini paling ideal untuk halaman dokumen vertikal standar (Portrait).</span>
+        <a href="diagram_alur_simple_siapansa.png" target="_blank" class="text-emerald-600 hover:underline font-bold">Buka file PNG resolusi penuh ➔</a>
+      </div>
+    </div>
+
+    <!-- Keterangan Makalah -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+      <h3 class="font-bold text-slate-900 text-base">Narasi Keterangan Gambar untuk Makalah:</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+          <strong class="text-slate-900">Tahap 1: Input Data Desa</strong>
+          <p class="text-slate-600 mt-1">Petugas mencatat mutasi beras dan komoditas pangan via aplikasi web atau mode offline SQLite. Data disandingkan dengan jumlah jiwa penduduk dan norma AKG (300 g/kapita/hari) serta data cuaca BMKG dan harga pasar.</p>
+        </div>
+        <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+          <strong class="text-emerald-900">Tahap 2: Mesin Analisis AI &amp; EWS</strong>
+          <p class="text-emerald-800 mt-1">Sistem otomatis menghitung Days of Coverage (DoC) cadangan pangan. Mesin AI mensintesis kurasi berita nasional dan cuaca untuk mendeteksi dini kerentanan komoditas sebelum krisis terjadi.</p>
+        </div>
+        <div class="p-3 bg-blue-50 rounded-xl border border-blue-200">
+          <strong class="text-blue-900">Tahap 3: Dashboard &amp; Peringatan Dini</strong>
+          <p class="text-blue-800 mt-1">Visualisasi indikator status desa (Aman, Waspada, Kritis) dan skor Indeks Ketahanan Pangan (IKP) memberikan instruksi taktis instan yang siap dieksekusi Kepala Desa.</p>
+        </div>
+        <div class="p-3 bg-amber-50 rounded-xl border border-amber-200">
+          <strong class="text-amber-900">Tahap 4: Aksi Logistik Antar-Desa</strong>
+          <p class="text-amber-800 mt-1">Eksekusi intervensi cadangan lumbung, pasar murah, dan kolaborasi barter bilateral (surplus beras Desa Sumber Rejo ditukar surplus sayuran Desa Tumpakrejo).</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function showTab(tab) {
+      const hContent = document.getElementById('content-horizontal');
+      const vContent = document.getElementById('content-vertical');
+      const hTab = document.getElementById('tab-h');
+      const vTab = document.getElementById('tab-v');
+
+      if (tab === 'horizontal') {
+        hContent.classList.remove('hidden');
+        vContent.classList.add('hidden');
+        hTab.className = "px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow-sm transition";
+        vTab.className = "px-4 py-2 text-xs font-bold rounded-lg bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 transition";
+      } else {
+        hContent.classList.add('hidden');
+        vContent.classList.remove('hidden');
+        vTab.className = "px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 text-white shadow-sm transition";
+        hTab.className = "px-4 py-2 text-xs font-bold rounded-lg bg-white text-slate-600 border border-slate-200 hover:bg-slate-100 transition";
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,102 +1,79 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 920" width="740" height="920">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 900" width="760" height="900">
   <defs>
     <style>
-      .title { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 21px; font-weight: 800; fill: #0f172a; text-anchor: middle; }
-      .subtitle { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 13px; fill: #64748b; text-anchor: middle; }
-      .badge-txt { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 800; fill: #ffffff; letter-spacing: 0.5px; }
-      .card-title { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 15px; font-weight: 700; fill: #0f172a; }
-      .card-sub { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; fill: #64748b; }
-      .card-body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; fill: #334155; }
-      .card-body-b { font-weight: 700; }
-      .arrow { fill: #475569; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: central; }
+      .txt-title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 19px; font-weight: 700; fill: #0f172a; }
+      .txt-sub { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; fill: #475569; }
+      .stage-num { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; fill: #64748b; letter-spacing: 0.5px; }
+      .stage-num-green { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; fill: #166534; letter-spacing: 0.5px; }
+      .stage-head { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 700; fill: #0f172a; }
+      .body-txt { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; fill: #334155; }
+      .bold-txt { font-weight: 600; fill: #0f172a; }
+      .arrow-v { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; fill: #94a3b8; text-anchor: middle; }
     </style>
-    <filter id="shadow" x="-3%" y="-5%" width="106%" height="110%">
-      <feDropShadow dx="0" dy="3" stdDeviation="5" flood-opacity="0.04" />
-    </filter>
   </defs>
 
-  <!-- Background -->
-  <rect width="740" height="920" fill="#ffffff" rx="16" stroke="#e2e8f0" stroke-width="1.5"/>
+  <rect width="760" height="900" fill="#ffffff" rx="12" stroke="#cbd5e1" stroke-width="1"/>
 
   <!-- Header -->
-  <rect x="250" y="22" width="240" height="24" rx="12" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1"/>
-  <text x="370" y="38" font-family="system-ui, sans-serif" font-size="11" font-weight="700" fill="#065f46" text-anchor="middle" letter-spacing="1">CARA KERJA SISTEM SIAPANSA</text>
-  <text x="370" y="70" class="title">Diagram Alur Integrasi Ketahanan Pangan Desa</text>
-  <text x="370" y="90" class="subtitle">Pencatatan Multikanal ➔ Mesin AI ➔ Dashboard EWS ➔ Logistik Antar-Desa</text>
+  <text x="28" y="44" class="txt-title">Diagram Alur Sistem SIAPANSA</text>
+  <text x="28" y="66" class="txt-sub">Arsitektur Operasional: Dari Pencatatan Lumbung, Analisis Komputasi AI, hingga Logistik Antar-Desa</text>
+  <line x1="28" y1="84" x2="732" y2="84" stroke="#e2e8f0" stroke-width="1"/>
 
-  <!-- CARD 1 -->
-  <g transform="translate(35, 115)">
-    <rect width="670" height="150" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)"/>
-    <rect x="20" y="20" width="80" height="24" rx="6" fill="#334155"/>
-    <text x="28" y="36" class="badge-txt">TAHAP 01</text>
+  <!-- Stage 1 -->
+  <g transform="translate(28, 104)">
+    <rect width="704" height="150" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="20" y="32" class="stage-num">TAHAP 1</text>
+    <text x="110" y="32" class="stage-head">Pengumpulan Data Lumbung</text>
     
-    <text x="120" y="36" class="card-title">Input &amp; Pengumpulan Data Lumbung</text>
-    <text x="120" y="54" class="card-sub">Pencatatan multikanal lumbung desa</text>
-
-    <text x="120" y="80" class="card-body">
-      <tspan fill="#475569" font-weight="bold">• </tspan><tspan class="card-body-b">Stok Lumbung Desa:</tspan> Pencatatan mutasi pangan masuk/keluar (Online / Offline SQLite).
-      <tspan x="120" dy="20" fill="#475569" font-weight="bold">• </tspan><tspan class="card-body-b">Demografi Penduduk:</tspan> Jumlah jiwa desa &amp; standar konsumsi AKG Kemenkes RI.
-      <tspan x="120" dy="20" fill="#475569" font-weight="bold">• </tspan><tspan class="card-body-b">Agregasi Data Eksternal:</tspan> Integrasi data cuaca BMKG &amp; fluktuasi harga pasar komoditas.
+    <text x="110" y="60" class="body-txt">
+      <tspan fill="#64748b" font-weight="bold">– </tspan><tspan class="bold-txt">Stok Komoditas:</tspan> Mutasi pangan masuk &amp; keluar (mendukung offline SQLite).
+      <tspan x="110" dy="22" fill="#64748b" font-weight="bold">– </tspan><tspan class="bold-txt">Demografi Penduduk:</tspan> Jumlah jiwa desa &amp; norma konsumsi AKG (300 g/hari).
+      <tspan x="110" dy="22" fill="#64748b" font-weight="bold">– </tspan><tspan class="bold-txt">Data Eksternal:</tspan> Prakiraan cuaca BMKG &amp; pembaruan tren harga pasar komoditas.
     </text>
   </g>
 
-  <!-- ARROW 1 -> 2 -->
-  <circle cx="370" cy="285" r="14" fill="#f1f5f9" stroke="#cbd5e1"/>
-  <text x="370" y="285" class="arrow">▼</text>
+  <text x="380" y="280" class="arrow-v">↓</text>
 
-  <!-- CARD 2 -->
-  <g transform="translate(35, 305)">
-    <rect width="670" height="150" rx="12" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1.5" filter="url(#shadow)"/>
-    <rect x="20" y="20" width="80" height="24" rx="6" fill="#059669"/>
-    <text x="28" y="36" class="badge-txt">TAHAP 02</text>
-    
-    <text x="120" y="36" class="card-title">Mesin Analisis AI &amp; EWS</text>
-    <text x="120" y="54" class="card-sub">Komputasi &amp; proyeksi prediktif ketahanan pangan</text>
+  <!-- Stage 2 (Highlight Green) -->
+  <g transform="translate(28, 298)">
+    <rect width="704" height="150" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+    <text x="20" y="32" class="stage-num-green">TAHAP 2</text>
+    <text x="110" y="32" class="stage-head">Komputasi AI &amp; Analisis Kerentanan</text>
 
-    <text x="120" y="80" class="card-body">
-      <tspan fill="#059669" font-weight="bold">• </tspan><tspan class="card-body-b">Days of Coverage (DoC):</tspan> Menghitung daya tahan stok pangan (Stok ÷ Kebutuhan Harian).
-      <tspan x="120" dy="20" fill="#059669" font-weight="bold">• </tspan><tspan class="card-body-b">Analisis Berita AI:</tspan> Kurasi berita pasar &amp; sintesis dampak risiko pangan lokal secara otomatis.
-      <tspan x="120" dy="20" fill="#059669" font-weight="bold">• </tspan><tspan class="card-body-b">Deteksi Dini Kerentanan:</tspan> Identifikasi titik terlemah lumbung &amp; estimasi tanggal stok kritis.
+    <text x="110" y="60" class="body-txt">
+      <tspan fill="#16a34a" font-weight="bold">– </tspan><tspan class="bold-txt">Days of Coverage (DoC):</tspan> Menghitung daya tahan stok (Stok ÷ Kebutuhan Harian Jiwa).
+      <tspan x="110" dy="22" fill="#16a34a" font-weight="bold">– </tspan><tspan class="bold-txt">Kurasi Berita AI:</tspan> Pemetaan sentimen pasokan pasar &amp; risiko gagal panen cuaca.
+      <tspan x="110" dy="22" fill="#16a34a" font-weight="bold">– </tspan><tspan class="bold-txt">Deteksi Dini:</tspan> Identifikasi titik terlemah lumbung &amp; estimasi tanggal kritis.
     </text>
   </g>
 
-  <!-- ARROW 2 -> 3 -->
-  <circle cx="370" cy="475" r="14" fill="#f1f5f9" stroke="#cbd5e1"/>
-  <text x="370" y="475" class="arrow">▼</text>
+  <text x="380" y="474" class="arrow-v">↓</text>
 
-  <!-- CARD 3 -->
-  <g transform="translate(35, 495)">
-    <rect width="670" height="150" rx="12" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5" filter="url(#shadow)"/>
-    <rect x="20" y="20" width="80" height="24" rx="6" fill="#2563eb"/>
-    <text x="28" y="36" class="badge-txt">TAHAP 03</text>
-    
-    <text x="120" y="36" class="card-title">Dashboard &amp; Peringatan Dini</text>
-    <text x="120" y="54" class="card-sub">Pusat visualisasi pengambil keputusan pemerintah desa</text>
+  <!-- Stage 3 -->
+  <g transform="translate(28, 492)">
+    <rect width="704" height="150" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
+    <text x="20" y="32" class="stage-num">TAHAP 3</text>
+    <text x="110" y="32" class="stage-head">Visualisasi Dashboard EWS</text>
 
-    <text x="120" y="80" class="card-body">
-      <tspan fill="#2563eb" font-weight="bold">• </tspan><tspan class="card-body-b">Status Pangan Real-Time:</tspan> Label visual status pangan desa (Aman, Waspada, atau Kritis).
-      <tspan x="120" dy="20" fill="#2563eb" font-weight="bold">• </tspan><tspan class="card-body-b">Indeks Ketahanan (IKP):</tspan> Skor komposit ketahanan pangan desa berbasis indikator terpadu.
-      <tspan x="120" dy="20" fill="#2563eb" font-weight="bold">• </tspan><tspan class="card-body-b">Rekomendasi Kebijakan:</tspan> Arahan mitigasi taktis instan bagi Kepala Desa &amp; aparat desa.
+    <text x="110" y="60" class="body-txt">
+      <tspan fill="#64748b" font-weight="bold">– </tspan><tspan class="bold-txt">Status Ketahanan:</tspan> Indikator visual status desa (Aman >30 hari, Waspada, Kritis).
+      <tspan x="110" dy="22" fill="#64748b" font-weight="bold">– </tspan><tspan class="bold-txt">Skor IKP Desa:</tspan> Nilai komposit Indeks Ketahanan Pangan wilayah.
+      <tspan x="110" dy="22" fill="#64748b" font-weight="bold">– </tspan><tspan class="bold-txt">Arahan Taktis:</tspan> Rekomendasi terstruktur untuk pengambilan keputusan Kepala Desa.
     </text>
   </g>
 
-  <!-- ARROW 3 -> 4 -->
-  <circle cx="370" cy="665" r="14" fill="#f1f5f9" stroke="#cbd5e1"/>
-  <text x="370" y="665" class="arrow">▼</text>
+  <text x="380" y="668" class="arrow-v">↓</text>
 
-  <!-- CARD 4 -->
-  <g transform="translate(35, 685)">
-    <rect width="670" height="150" rx="12" fill="#fefce8" stroke="#fde68a" stroke-width="1.5" filter="url(#shadow)"/>
-    <rect x="20" y="20" width="80" height="24" rx="6" fill="#d97706"/>
-    <text x="28" y="36" class="badge-txt">TAHAP 04</text>
-    
-    <text x="120" y="36" class="card-title">Aksi Lapangan &amp; Logistik Antar-Desa</text>
-    <text x="120" y="54" class="card-sub">Eksekusi intervensi logistik pangan terpadu</text>
+  <!-- Stage 4 (Highlight Green) -->
+  <g transform="translate(28, 686)">
+    <rect width="704" height="150" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
+    <text x="20" y="32" class="stage-num-green">TAHAP 4</text>
+    <text x="110" y="32" class="stage-head">Eksekusi Logistik Antar-Desa</text>
 
-    <text x="120" y="80" class="card-body">
-      <tspan fill="#d97706" font-weight="bold">• </tspan><tspan class="card-body-b">Intervensi Cadangan:</tspan> Operasi pasar murah &amp; penyaluran stok darurat lumbung desa.
-      <tspan x="120" dy="20" fill="#d97706" font-weight="bold">• </tspan><tspan class="card-body-b">Barter Bilateral Antar-Desa:</tspan> Surplus Beras Sumber Rejo ↔ Surplus Sayur Tumpakrejo.
-      <tspan x="120" dy="20" fill="#d97706" font-weight="bold">• </tspan><tspan class="card-body-b">Keseimbangan Wilayah:</tspan> Menjamin ketahanan pangan berkelanjutan tanpa kelangkaan.
+    <text x="110" y="60" class="body-txt">
+      <tspan fill="#16a34a" font-weight="bold">– </tspan><tspan class="bold-txt">Intervensi Lokal:</tspan> Operasi pasar murah &amp; pelepasan cadangan darurat lumbung.
+      <tspan x="110" dy="22" fill="#16a34a" font-weight="bold">– </tspan><tspan class="bold-txt">Barter Bilateral:</tspan> Pertukaran surplus Beras Sumber Rejo ↔ Sayur Tumpakrejo.
+      <tspan x="110" dy="22" fill="#16a34a" font-weight="bold">– </tspan><tspan class="bold-txt">Stabilisasi Pasokan:</tspan> Pemulihan cadangan pangan menuju keseimbangan wilayah.
     </text>
   </g>
 </svg>

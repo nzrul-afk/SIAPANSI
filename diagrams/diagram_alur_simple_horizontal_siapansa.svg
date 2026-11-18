@@ -1,118 +1,51 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 480" width="1280" height="480">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 200" width="1000" height="200">
   <defs>
     <style>
-      .txt-title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 19px; font-weight: 700; fill: #0f172a; }
-      .txt-sub { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 13px; fill: #475569; }
-      .stage-num { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; fill: #64748b; letter-spacing: 0.5px; }
-      .stage-num-green { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; fill: #166534; letter-spacing: 0.5px; }
-      .stage-head { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 14px; font-weight: 700; fill: #0f172a; }
-      .body-txt { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11.5px; fill: #334155; line-height: 1.4; }
-      .bold-txt { font-weight: 600; fill: #0f172a; }
-      .arrow { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 18px; fill: #94a3b8; text-anchor: middle; dominant-baseline: central; }
+      .step-num { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; fill: #64748b; letter-spacing: 0.5px; }
+      .step-num-green { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 11px; font-weight: 700; fill: #166534; letter-spacing: 0.5px; }
+      .title { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 16px; font-weight: 700; fill: #0f172a; text-anchor: middle; }
+      .desc { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 12px; fill: #475569; text-anchor: middle; }
+      .arrow { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: 22px; font-weight: bold; fill: #0f172a; text-anchor: middle; dominant-baseline: central; }
     </style>
   </defs>
 
-  <rect width="1280" height="480" fill="#ffffff" rx="12" stroke="#cbd5e1" stroke-width="1"/>
+  <rect width="1000" height="200" fill="#ffffff" rx="8"/>
 
-  <!-- Header -->
-  <text x="28" y="44" class="txt-title">Diagram Alur Sistem SIAPANSA</text>
-  <text x="28" y="66" class="txt-sub">Arsitektur Operasional: Dari Pencatatan Lumbung, Analisis Komputasi AI, hingga Logistik Antar-Desa</text>
-  <line x1="28" y1="84" x2="1252" y2="84" stroke="#e2e8f0" stroke-width="1"/>
-
-  <!-- Stage 1 -->
-  <g transform="translate(28, 105)">
-    <rect width="275" height="345" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
-    <text x="16" y="26" class="stage-num">TAHAP 1</text>
-    <text x="16" y="48" class="stage-head">Pengumpulan Data Lumbung</text>
-    <line x1="16" y1="60" x2="259" y2="60" stroke="#e2e8f0" stroke-width="1"/>
-    
-    <text x="16" y="86" class="body-txt">
-      <tspan fill="#64748b" font-weight="bold">– </tspan><tspan class="bold-txt">Stok Komoditas:</tspan>
-      <tspan x="28" dy="18">Mutasi pangan masuk &amp; keluar</tspan>
-      <tspan x="28" dy="16">(mendukung offline SQLite).</tspan>
-
-      <tspan x="16" dy="28" fill="#64748b" font-weight="bold">– </tspan><tspan class="bold-txt">Demografi Penduduk:</tspan>
-      <tspan x="28" dy="18">Jumlah jiwa desa &amp; norma</tspan>
-      <tspan x="28" dy="16">konsumsi AKG (300 g/hari).</tspan>
-
-      <tspan x="16" dy="28" fill="#64748b" font-weight="bold">– </tspan><tspan class="bold-txt">Data Eksternal:</tspan>
-      <tspan x="28" dy="18">Prakiraan cuaca BMKG &amp;</tspan>
-      <tspan x="28" dy="16">pembaruan tren harga pasar.</tspan>
-    </text>
+  <!-- Box 1 -->
+  <g transform="translate(20, 40)">
+    <rect width="210" height="120" rx="8" fill="#ffffff" stroke="#0f172a" stroke-width="1.5"/>
+    <text x="105" y="32" class="step-num" text-anchor="middle">TAHAP 1</text>
+    <text x="105" y="62" class="title">Input Data</text>
+    <text x="105" y="86" class="desc">Stok Lumbung &amp; Penduduk</text>
   </g>
 
-  <!-- Arrow 1 -> 2 -->
-  <text x="325" y="278" class="arrow">→</text>
+  <text x="255" y="100" class="arrow">→</text>
 
-  <!-- Stage 2 (Highlight Green) -->
-  <g transform="translate(345, 105)">
-    <rect width="275" height="345" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
-    <text x="16" y="26" class="stage-num-green">TAHAP 2</text>
-    <text x="16" y="48" class="stage-head">Komputasi AI &amp; Analisis Kerentanan</text>
-    <line x1="16" y1="60" x2="259" y2="60" stroke="#bbf7d0" stroke-width="1"/>
-
-    <text x="16" y="86" class="body-txt">
-      <tspan fill="#16a34a" font-weight="bold">– </tspan><tspan class="bold-txt">Days of Coverage (DoC):</tspan>
-      <tspan x="28" dy="18">Menghitung daya tahan stok</tspan>
-      <tspan x="28" dy="16">(Stok ÷ Kebutuhan Jiwa).</tspan>
-
-      <tspan x="16" dy="28" fill="#16a34a" font-weight="bold">– </tspan><tspan class="bold-txt">Kurasi Berita AI:</tspan>
-      <tspan x="28" dy="18">Pemetaan sentimen pasokan</tspan>
-      <tspan x="28" dy="16">pasar &amp; risiko gagal panen.</tspan>
-
-      <tspan x="16" dy="28" fill="#16a34a" font-weight="bold">– </tspan><tspan class="bold-txt">Deteksi Dini:</tspan>
-      <tspan x="28" dy="18">Identifikasi titik terlemah</tspan>
-      <tspan x="28" dy="16">lumbung &amp; estimasi krisis.</tspan>
-    </text>
+  <!-- Box 2 -->
+  <g transform="translate(275, 40)">
+    <rect width="210" height="120" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+    <text x="105" y="32" class="step-num-green" text-anchor="middle">TAHAP 2</text>
+    <text x="105" y="62" class="title">Analisis AI</text>
+    <text x="105" y="86" class="desc">Prediksi Ketahanan Pangan</text>
   </g>
 
-  <!-- Arrow 2 -> 3 -->
-  <text x="642" y="278" class="arrow">→</text>
+  <text x="510" y="100" class="arrow">→</text>
 
-  <!-- Stage 3 -->
-  <g transform="translate(662, 105)">
-    <rect width="275" height="345" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1"/>
-    <text x="16" y="26" class="stage-num">TAHAP 3</text>
-    <text x="16" y="48" class="stage-head">Visualisasi Dashboard EWS</text>
-    <line x1="16" y1="60" x2="259" y2="60" stroke="#e2e8f0" stroke-width="1"/>
-
-    <text x="16" y="86" class="body-txt">
-      <tspan fill="#64748b" font-weight="bold">– </tspan><tspan class="bold-txt">Status Ketahanan:</tspan>
-      <tspan x="28" dy="18">Indikator status desa</tspan>
-      <tspan x="28" dy="16">(Aman >30 hari, Waspada, Kritis).</tspan>
-
-      <tspan x="16" dy="28" fill="#64748b" font-weight="bold">– </tspan><tspan class="bold-txt">Skor IKP Desa:</tspan>
-      <tspan x="28" dy="18">Nilai komposit Indeks</tspan>
-      <tspan x="28" dy="16">Ketahanan Pangan wilayah.</tspan>
-
-      <tspan x="16" dy="28" fill="#64748b" font-weight="bold">– </tspan><tspan class="bold-txt">Arahan Taktis:</tspan>
-      <tspan x="28" dy="18">Rekomendasi terstruktur untuk</tspan>
-      <tspan x="28" dy="16">pengambilan keputusan desa.</tspan>
-    </text>
+  <!-- Box 3 -->
+  <g transform="translate(530, 40)">
+    <rect width="210" height="120" rx="8" fill="#ffffff" stroke="#0f172a" stroke-width="1.5"/>
+    <text x="105" y="32" class="step-num" text-anchor="middle">TAHAP 3</text>
+    <text x="105" y="62" class="title">Dashboard EWS</text>
+    <text x="105" y="86" class="desc">Status &amp; Peringatan Dini</text>
   </g>
 
-  <!-- Arrow 3 -> 4 -->
-  <text x="959" y="278" class="arrow">→</text>
+  <text x="765" y="100" class="arrow">→</text>
 
-  <!-- Stage 4 (Highlight Green) -->
-  <g transform="translate(977, 105)">
-    <rect width="275" height="345" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1"/>
-    <text x="16" y="26" class="stage-num-green">TAHAP 4</text>
-    <text x="16" y="48" class="stage-head">Eksekusi Logistik Antar-Desa</text>
-    <line x1="16" y1="60" x2="259" y2="60" stroke="#bbf7d0" stroke-width="1"/>
-
-    <text x="16" y="86" class="body-txt">
-      <tspan fill="#16a34a" font-weight="bold">– </tspan><tspan class="bold-txt">Intervensi Lokal:</tspan>
-      <tspan x="28" dy="18">Operasi pasar murah &amp;</tspan>
-      <tspan x="28" dy="16">pelepasan cadangan darurat.</tspan>
-
-      <tspan x="16" dy="28" fill="#16a34a" font-weight="bold">– </tspan><tspan class="bold-txt">Barter Bilateral:</tspan>
-      <tspan x="28" dy="18">Pertukaran surplus Beras</tspan>
-      <tspan x="28" dy="16">Sumber Rejo ↔ Sayur Tumpakrejo.</tspan>
-
-      <tspan x="16" dy="28" fill="#16a34a" font-weight="bold">– </tspan><tspan class="bold-txt">Stabilisasi Pasokan:</tspan>
-      <tspan x="28" dy="18">Pemulihan cadangan pangan</tspan>
-      <tspan x="28" dy="16">menuju keseimbangan wilayah.</tspan>
-    </text>
+  <!-- Box 4 -->
+  <g transform="translate(785, 40)">
+    <rect width="195" height="120" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+    <text x="97" y="32" class="step-num-green" text-anchor="middle">TAHAP 4</text>
+    <text x="97" y="62" class="title">Aksi Lapangan</text>
+    <text x="97" y="86" class="desc">Bantuan &amp; Barter Antar-Desa</text>
   </g>
 </svg>

@@ -2179,7 +2179,7 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
       recalculateOverviewSummary();
       return {
         status: 'sukses',
-        pesan: `Data penduduk berhasil diperbarui (${tot} jiwa). Kebutuhan harian 10 komoditas telah dihitung ulang.`,
+        pesan: `Data penduduk berhasil diperbarui (${tot} jiwa). Kebutuhan harian seluruh komoditas telah dihitung ulang.`,
         data: statePopulation,
       };
     }

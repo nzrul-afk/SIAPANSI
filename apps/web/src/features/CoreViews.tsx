@@ -356,23 +356,19 @@ export const DashboardView: React.FC<{
       <div className="space-y-2">
         <div className="flex items-center justify-between flex-wrap gap-2 px-1">
           <p className="text-xs font-bold text-stone-700">Pilih Komoditas untuk Proyeksi Kurva 30 Hari:</p>
-          <div className="flex gap-1.5">
-            {[
-              { id: 'c-beras', label: 'Beras' },
-              { id: 'c-kedelai', label: 'Kedelai' },
-              { id: 'c-jagung', label: 'Jagung' },
-            ].map((comm) => (
+          <div className="flex gap-1.5 overflow-x-auto max-w-full pb-1">
+            {(overview.komoditas || []).slice(0, 8).map((comm: any) => (
               <button
                 key={comm.id}
                 type="button"
                 onClick={() => setSelectedCommId(comm.id)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+                className={`px-2.5 py-1 rounded-lg text-xs font-bold transition shrink-0 ${
                   selectedCommId === comm.id
-                    ? 'bg-brand-700 text-white'
+                    ? 'bg-brand-700 text-white shadow-xs'
                     : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-100'
                 }`}
               >
-                {comm.label}
+                {comm.nama}
               </button>
             ))}
           </div>
@@ -380,7 +376,7 @@ export const DashboardView: React.FC<{
 
         {proj && (
           <AccessibleLineChart
-            title={`Proyeksi Stok ${selectedCommId === 'c-beras' ? 'Beras' : selectedCommId === 'c-kedelai' ? 'Kedelai' : 'Jagung'} 30 Hari (tanpa pasokan luar)`}
+            title={`Proyeksi Stok ${(overview.komoditas || []).find((c: any) => c.id === selectedCommId)?.nama || 'Komoditas'} 30 Hari (tanpa pasokan luar)`}
             altDescription="Grafik proyeksi stok pangan selama 30 hari ke depan dibanding ambang batas aman dan waspada."
             data={proj.proyeksi.filter((_: any, i: number) => i % 2 === 0)}
             xKey="hari_ke"

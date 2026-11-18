@@ -131,7 +131,7 @@ export const AnalysisView: React.FC<{
               <AIBadge label="AI Intelligence" />
             </div>
             <p className="text-xs text-stone-600">
-              Pantauan tren harga 10 bahan pokok, kurasi berita pangan terkini, dan sintesis analisis dampak AI untuk Desa Sumber Rejo.
+              Pantauan tren harga komoditas bahan pangan, kurasi berita pangan terkini, dan sintesis analisis dampak AI untuk Desa Sumber Rejo.
             </p>
           </div>
 
@@ -349,10 +349,10 @@ export const AnalysisView: React.FC<{
             </div>
           )}
 
-          {/* Tabel Perbandingan Harga 10 Bahan Pokok */}
+          {/* Tabel Perbandingan Harga Komoditas Pangan */}
           <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-xs">
             <h3 className="font-extrabold text-stone-900 text-sm mb-1">
-              Daftar Pantauan 10 Bahan Pokok Desa
+              Daftar Pantauan Komoditas Pangan Desa ({commodities?.length || 10} Bahan)
             </h3>
             <p className="text-xs text-stone-500 mb-3">
               Klik salah satu bahan pangan untuk melihat pergerakan grafiknya di atas.

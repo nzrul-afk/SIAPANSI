@@ -1,20 +1,32 @@
 import React, { useEffect, useState } from 'react';
 import {
   Activity,
+  AlertCircle,
   AlertTriangle,
+  ArrowDownRight,
   ArrowRight,
+  ArrowUpRight,
   Bot,
+  Calendar,
+  CalendarDays,
   Check,
+  CheckCircle2,
   Clock,
   Copy,
   FileText,
   Globe,
+  Lightbulb,
+  Newspaper,
   Printer,
   RefreshCw,
   Send,
   Share2,
+  ShieldAlert,
   Sliders,
+  Sparkles,
   Sprout,
+  TrendingDown,
+  TrendingUp,
   Truck,
   Utensils,
   Zap,
@@ -29,544 +41,706 @@ import {
 } from '../components/common/Primitives';
 
 /**
- * F7 & F8: Prediksi Panen (ML) & Harga dan Sinyal Global (ML)
+ * Fitur Analisis Pangan AI:
+ * 1. Grafik Tren Harga Komoditas Pokok (Per Hari, Per Bulan, Per Tahun)
+ * 2. Berita Pangan Terkini Kurasi AI
+ * 3. Hasil Sintesis Analisis Dampak & Rekomendasi Aksi AI
  */
-export const PredictAndGlobalView: React.FC<{
+export const AnalysisView: React.FC<{
   commodities: Array<any>;
   onRefreshOverview: () => void;
   onNavigate: (tab: string) => void;
 }> = ({ commodities, onRefreshOverview, onNavigate }) => {
-  const [subTab, setSubTab] = useState<'panen' | 'harga'>('panen');
-  const [harvestData, setHarvestData] = useState<any>(null);
-  const [komoditasTanam, setKomoditasTanam] = useState('padi');
-  const [luasHa, setLuasHa] = useState('2.5');
-  const [varietas, setVarietas] = useState('Inpari 32');
-  const [kondisiPupuk, setKondisiPupuk] = useState('cukup');
-  const [sumberAir, setSumberAir] = useState('irigasi_teknis');
-  const [customPred, setCustomPred] = useState<any>(null);
+  const [subTab, setSubTab] = useState<'grafik' | 'berita' | 'ai-analisis'>('grafik');
 
-  const [selectedCommId, setSelectedCommId] = useState('c-terigu');
+  // 1. State Grafik Harga
+  const [selectedCommId, setSelectedCommId] = useState<string>('c-beras');
+  const [timeframe, setTimeframe] = useState<'hari' | 'bulan' | 'tahun'>('hari');
   const [priceData, setPriceData] = useState<any>(null);
-  const [signalsData, setSignalsData] = useState<any>(null);
-  const [eventsData, setEventsData] = useState<Array<any>>([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingPrice, setLoadingPrice] = useState(false);
 
-  const loadHarvestPlans = async () => {
+  // 2. State Berita Pangan AI
+  const [newsList, setNewsList] = useState<Array<any>>([]);
+  const [loadingNews, setLoadingNews] = useState(false);
+  const [filterKategori, setFilterKategori] = useState<string>('semua');
+
+  // 3. State Analisis Dampak AI
+  const [aiSummary, setAiSummary] = useState<any>(null);
+  const [loadingSummary, setLoadingSummary] = useState(false);
+
+  const loadPriceData = async (cid: string, tf: string) => {
+    setLoadingPrice(true);
     try {
-      const { data } = await apiRequest('/harvest-plans');
-      setHarvestData(data);
+      const { data } = await apiRequest(`/analysis/prices?commodity=${cid}&timeframe=${tf}`);
+      setPriceData(data);
     } catch {
-      // handled by cache
+      // handled
+    } finally {
+      setLoadingPrice(false);
     }
   };
 
-  const loadPriceAndSignals = async (cid: string) => {
+  const loadNewsData = async () => {
+    setLoadingNews(true);
     try {
-      const [pRes, sRes, eRes] = await Promise.all([
-        apiRequest(`/prices/${cid}`),
-        apiRequest('/global/signals'),
-        apiRequest('/global/events'),
-      ]);
-      setPriceData(pRes.data);
-      setSignalsData(sRes.data);
-      setEventsData(eRes.data.peristiwa || []);
+      const { data } = await apiRequest('/analysis/news');
+      setNewsList(data.berita || []);
     } catch {
       // handled
+    } finally {
+      setLoadingNews(false);
+    }
+  };
+
+  const loadAiSummaryData = async () => {
+    setLoadingSummary(true);
+    try {
+      const { data } = await apiRequest('/analysis/ai-summary');
+      setAiSummary(data);
+    } catch {
+      // handled
+    } finally {
+      setLoadingSummary(false);
     }
   };
 
   useEffect(() => {
-    void loadHarvestPlans();
-    void loadPriceAndSignals(selectedCommId);
-  }, [selectedCommId]);
+    void loadPriceData(selectedCommId, timeframe);
+  }, [selectedCommId, timeframe]);
 
-  const handleRunHarvestForecast = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setLoading(true);
-    try {
-      const { data } = await apiRequest('/forecast/harvest', {
-        method: 'POST',
-        body: JSON.stringify({
-          komoditas: komoditasTanam,
-          luas_ha: parseFloat(luasHa) || 1.0,
-          varietas,
-          kondisi_pupuk: kondisiPupuk,
-          sumber_air: sumberAir,
-        }),
-      });
-      setCustomPred(data);
-    } finally {
-      setLoading(false);
-    }
-  };
+  useEffect(() => {
+    void loadNewsData();
+    void loadAiSummaryData();
+  }, []);
 
-  const handleAddHarvestToProjection = async () => {
-    setLoading(true);
-    try {
-      await apiRequest('/harvest-plans', {
-        method: 'POST',
-        body: JSON.stringify({
-          komoditas: komoditasTanam,
-          luas_ha: parseFloat(luasHa) || 1.0,
-          varietas,
-          kondisi_pupuk: kondisiPupuk,
-          sumber_air: sumberAir,
-          aktif_di_proyeksi: true,
-        }),
-      });
-      await loadHarvestPlans();
-      onRefreshOverview();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTogglePlanActive = async (planId: string, curr: boolean) => {
-    await apiRequest(`/harvest-plans/${planId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ aktif_di_proyeksi: !curr }),
-    });
-    await loadHarvestPlans();
-    onRefreshOverview();
-  };
-
-  const handleTriggerEvent = async (eventId: string, aktif: boolean) => {
-    await apiRequest('/demo/event', {
-      method: 'POST',
-      body: JSON.stringify({ event_id: eventId, aktif }),
-    });
-    await loadPriceAndSignals(selectedCommId);
-    onRefreshOverview();
-  };
+  const filteredNews = filterKategori === 'semua'
+    ? newsList
+    : newsList.filter((n) => (n.kategori || '').toLowerCase().includes(filterKategori.toLowerCase()));
 
   return (
-    <div className="space-y-5">
-      {/* Sub-navigation tabs */}
-      <div className="flex rounded-xl bg-stone-200/80 p-1">
-        <button
-          type="button"
-          onClick={() => setSubTab('panen')}
-          className={`flex-1 min-h-[44px] rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition ${
-            subTab === 'panen' ? 'bg-white text-brand-800 shadow-sm' : 'text-stone-700'
-          }`}
-        >
-          <Sprout className="w-4 h-4" />
-          Prediksi Panen (ML)
-        </button>
-        <button
-          type="button"
-          onClick={() => setSubTab('harga')}
-          className={`flex-1 min-h-[44px] rounded-lg font-bold text-sm flex items-center justify-center gap-2 transition ${
-            subTab === 'harga' ? 'bg-white text-brand-800 shadow-sm' : 'text-stone-700'
-          }`}
-        >
-          <Globe className="w-4 h-4" />
-          Harga & Sinyal Global
-        </button>
+    <div className="space-y-4">
+      {/* Header Utama Analisis */}
+      <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <h2 className="text-xl font-black text-stone-900 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-brand-700" />
+                Analisis Pangan Desa
+              </h2>
+              <AIBadge label="AI Intelligence" />
+            </div>
+            <p className="text-xs text-stone-600">
+              Pantauan tren harga 10 bahan pokok, kurasi berita pangan terkini, dan sintesis analisis dampak AI untuk Desa Sumber Rejo.
+            </p>
+          </div>
+
+          {/* Sub-Tab Navigation */}
+          <div className="inline-flex rounded-xl border border-stone-200 p-1 bg-stone-50" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={subTab === 'grafik'}
+              onClick={() => setSubTab('grafik')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                subTab === 'grafik'
+                  ? 'bg-white text-stone-900 shadow-xs'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <TrendingUp className="w-3.5 h-3.5 text-brand-700" />
+              Grafik Harga
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={subTab === 'berita'}
+              onClick={() => setSubTab('berita')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                subTab === 'berita'
+                  ? 'bg-white text-stone-900 shadow-xs'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <Newspaper className="w-3.5 h-3.5 text-blue-700" />
+              Berita Pangan AI
+              {newsList.length > 0 && (
+                <span className="ml-0.5 px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 text-blue-800 font-extrabold">
+                  {newsList.length}
+                </span>
+              )}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={subTab === 'ai-analisis'}
+              onClick={() => setSubTab('ai-analisis')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center gap-1.5 ${
+                subTab === 'ai-analisis'
+                  ? 'bg-white text-stone-900 shadow-xs'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              Hasil Analisis AI
+            </button>
+          </div>
+        </div>
       </div>
 
-      {subTab === 'panen' ? (
+      {/* SUB-TAB 1: GRAFIK HARGA BAHAN POKOK */}
+      {subTab === 'grafik' && (
         <div className="space-y-4">
-          {/* Model metadata banner */}
-          <div className="rounded-xl bg-indigo-50 border border-indigo-200 p-3.5 flex flex-wrap items-center justify-between gap-2 text-xs text-indigo-950">
-            <div className="flex items-center gap-2 flex-wrap">
-              <AIBadge />
-              <span className="font-bold">
-                {harvestData?.metadata_model?.label_ui || 'Model dilatih dari data simulasi'}
-              </span>
-            </div>
-            {harvestData?.metadata_model && (
-              <span className="font-semibold bg-white px-2.5 py-1 rounded border border-indigo-200">
-                MAE: {formatAngka(harvestData.metadata_model.mae_kg_ha, 1)} kg/ha · MAPE:{' '}
-                {formatAngka(harvestData.metadata_model.mape_pct, 2)}%
-              </span>
-            )}
-          </div>
-
-          {/* Interactive ML Harvest Predictor Form */}
-          <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-            <h3 className="font-bold text-base text-stone-900 mb-1">
-              Hitung Perkiraan Panen Rencana Tanam Baru
-            </h3>
-            <p className="text-xs text-stone-600 mb-3">
-              Menggunakan Gradient Boosting Quantile Regression (P10, Median, P90)
-            </p>
-            <form onSubmit={handleRunHarvestForecast} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-stone-700 mb-1">Komoditas Tanam</label>
-                <select
-                  value={komoditasTanam}
-                  onChange={(e) => setKomoditasTanam(e.target.value)}
-                  className="w-full min-h-[46px] px-3 rounded-xl border border-stone-300 bg-white text-sm font-medium"
-                >
-                  <option value="padi">Padi (Gabah ke Beras)</option>
-                  <option value="jagung">Jagung Pipil</option>
-                  <option value="singkong">Singkong (Gaplek)</option>
-                  <option value="kedelai">Kedelai Lokal</option>
-                  <option value="cabai_rawit">Cabai Rawit</option>
-                  <option value="bawang_merah">Bawang Merah</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-stone-700 mb-1">Luas Lahan (hektare)</label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0.1"
-                  value={luasHa}
-                  onChange={(e) => setLuasHa(e.target.value)}
-                  className="w-full min-h-[46px] px-3 rounded-xl border border-stone-300 text-sm font-bold"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-stone-700 mb-1">Varietas</label>
-                <input
-                  type="text"
-                  value={varietas}
-                  onChange={(e) => setVarietas(e.target.value)}
-                  className="w-full min-h-[46px] px-3 rounded-xl border border-stone-300 text-sm"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-stone-700 mb-1">Kondisi Pupuk</label>
-                <select
-                  value={kondisiPupuk}
-                  onChange={(e) => setKondisiPupuk(e.target.value)}
-                  className="w-full min-h-[46px] px-3 rounded-xl border border-stone-300 bg-white text-sm font-medium"
-                >
-                  <option value="cukup">Cukup (Sesuai Dosis)</option>
-                  <option value="kurang">Kurang (Terbatas)</option>
-                  <option value="sangat_kurang">Sangat Kurang (Langka)</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-stone-700 mb-1">Sumber Pengairan</label>
-                <select
-                  value={sumberAir}
-                  onChange={(e) => setSumberAir(e.target.value)}
-                  className="w-full min-h-[46px] px-3 rounded-xl border border-stone-300 bg-white text-sm font-medium"
-                >
-                  <option value="irigasi_teknis">Irigasi Teknis</option>
-                  <option value="tadah_hujan">Tadah Hujan</option>
-                </select>
-              </div>
-              <div className="flex items-end">
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full min-h-[46px] rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-bold text-sm"
-                >
-                  {loading ? 'Menghitung...' : 'Hitung Prediksi Panen'}
-                </button>
-              </div>
-            </form>
-
-            {customPred && (
-              <div className="mt-4 p-4 rounded-xl bg-emerald-50/70 border border-emerald-200 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <span className="text-xs font-bold uppercase text-emerald-900">
-                      Hasil Prediksi ({customPred.komoditas.toUpperCase()} · {customPred.luas_ha} ha)
-                    </span>
-                    <p className="text-2xl font-extrabold text-stone-900">
-                      Median: {formatAngka(customPred.volume_median_kg, 0)} kg
-                    </p>
-                    <p className="text-xs text-stone-700">
-                      Rentang Ketidakpastian (P10–P90):{' '}
-                      <strong>{formatAngka(customPred.volume_p10_kg, 0)} kg</strong> s/d{' '}
-                      <strong>{formatAngka(customPred.volume_p90_kg, 0)} kg</strong>
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-white border border-emerald-300 text-emerald-900">
-                      Keyakinan: {String(customPred.tingkat_keyakinan).toUpperCase()}
-                    </span>
-                    <p className="text-xs text-stone-600 mt-1">
-                      Perkiraan Panen: {formatTanggalIndo(customPred.tanggal_panen_awal)} –{' '}
-                      {formatTanggalIndo(customPred.tanggal_panen_akhir)}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Visual P10 - Median - P90 bar */}
-                <div className="bg-white p-3 rounded-lg border border-stone-200">
-                  <div className="flex justify-between text-[11px] font-semibold text-stone-600 mb-1">
-                    <span>Pesimis P10: {formatAngka(customPred.volume_p10_kg, 0)} kg</span>
-                    <span className="text-brand-800 font-bold">
-                      Median P50: {formatAngka(customPred.volume_median_kg, 0)} kg
-                    </span>
-                    <span>Optimis P90: {formatAngka(customPred.volume_p90_kg, 0)} kg</span>
-                  </div>
-                  <div className="h-3 rounded-full bg-stone-200 relative overflow-hidden">
-                    <div className="absolute inset-y-0 left-[15%] right-[15%] bg-emerald-400/70 rounded-full" />
-                    <div className="absolute inset-y-0 left-[48%] w-1.5 bg-brand-900" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                  {(customPred.faktor_pengaruh || []).map((f: any, idx: number) => (
-                    <div key={idx} className="p-2.5 rounded-lg bg-white border border-stone-200 text-xs">
-                      <p className="font-bold text-stone-800">{f.faktor}: {f.nilai}</p>
-                      <p className="text-stone-600 mt-0.5">{f.dampak}</p>
-                    </div>
-                  ))}
-                </div>
-
+          {/* Bar Seleksi Komoditas & Waktu */}
+          <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-xs space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <label htmlFor="select-commodity" className="text-xs font-extrabold uppercase tracking-wider text-stone-500">
+                Pilih Komoditas Bahan Pokok
+              </label>
+              {/* Timeframe Toggles */}
+              <div className="inline-flex rounded-lg border border-stone-200 p-0.5 bg-stone-50 text-xs">
                 <button
                   type="button"
-                  onClick={handleAddHarvestToProjection}
-                  className="min-h-[44px] px-4 rounded-xl bg-brand-700 text-white text-xs font-bold hover:bg-brand-800"
+                  onClick={() => setTimeframe('hari')}
+                  className={`px-3 py-1 rounded-md font-bold transition ${
+                    timeframe === 'hari' ? 'bg-brand-700 text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'
+                  }`}
                 >
-                  + Masukkan ke Proyeksi Stok Desa
+                  Per Hari (30 Hari)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTimeframe('bulan')}
+                  className={`px-3 py-1 rounded-md font-bold transition ${
+                    timeframe === 'bulan' ? 'bg-brand-700 text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  Per Bulan (12 Bulan)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTimeframe('tahun')}
+                  className={`px-3 py-1 rounded-md font-bold transition ${
+                    timeframe === 'tahun' ? 'bg-brand-700 text-white shadow-xs' : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  Per Tahun (5 Tahun)
                 </button>
               </div>
-            )}
-          </div>
-
-          {/* Existing Scheduled Harvest Plans (16.3) */}
-          <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm space-y-3">
-            <div className="flex items-center justify-between flex-wrap gap-2">
-              <h3 className="font-bold text-base text-stone-900">
-                Daftar Rencana Tanam & Jadwal Panen Desa
-              </h3>
-              <span className="text-xs font-medium text-amber-800 bg-amber-50 px-2.5 py-1 rounded border border-amber-200">
-                {harvestData?.catatan_impor}
-              </span>
             </div>
 
-            <div className="space-y-3">
-              {(harvestData?.rencana_tanam || []).map((hp: any) => {
-                const pr = hp.prediksi || {};
+            {/* Pill Komoditas (10 Bahan Pokok) */}
+            <div className="flex gap-2 overflow-x-auto pb-1" id="select-commodity">
+              {(commodities || []).map((c: any) => {
+                const active = (c.id === selectedCommId || c.kode === selectedCommId);
                 return (
-                  <div
-                    key={hp.id}
-                    className="p-3.5 rounded-xl border border-stone-200 bg-stone-50/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={() => setSelectedCommId(c.id)}
+                    className={`px-3 py-2 rounded-xl text-xs font-bold shrink-0 transition border flex items-center gap-1.5 ${
+                      active
+                        ? 'bg-brand-700 text-white border-brand-700 shadow-xs'
+                        : 'bg-stone-50 text-stone-700 border-stone-200 hover:bg-stone-100 hover:border-stone-300'
+                    }`}
                   >
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-bold text-sm text-stone-900">
-                          {hp.commodity_nama} ({hp.luas_ha} ha · {hp.varietas})
-                        </span>
-                        <span className="px-2 py-0.5 text-xs rounded bg-stone-200 text-stone-800 font-medium">
-                          Pupuk: {hp.kondisi_pupuk.replace('_', ' ')}
-                        </span>
-                        <span className="px-2 py-0.5 text-xs rounded bg-stone-200 text-stone-800 font-medium">
-                          Air: {hp.sumber_air.replace('_', ' ')}
-                        </span>
-                      </div>
-                      <p className="text-xs text-stone-600">
-                        Tanam: {formatTanggalIndo(hp.tanggal_tanam)} · Estimasi Panen:{' '}
-                        <strong>
-                          {formatTanggalIndo(pr.tanggal_panen_awal)} s/d {formatTanggalIndo(pr.tanggal_panen_akhir)}
-                        </strong>
-                      </p>
-                      <p className="text-xs text-stone-800">
-                        Prediksi Hasil Median: <strong>{formatAngka(pr.volume_median_kg, 0)} kg</strong> (Rentang P10–P90:{' '}
-                        {formatAngka(pr.volume_p10_kg, 0)} – {formatAngka(pr.volume_p90_kg, 0)} kg · Keyakinan:{' '}
-                        {pr.tingkat_keyakinan})
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleTogglePlanActive(hp.id, hp.aktif_di_proyeksi)}
-                      className={`min-h-[44px] px-3.5 rounded-xl text-xs font-bold border transition shrink-0 ${
-                        hp.aktif_di_proyeksi
-                          ? 'bg-emerald-700 text-white border-emerald-800'
-                          : 'bg-white text-stone-700 border-stone-300 hover:bg-stone-100'
-                      }`}
-                    >
-                      {hp.aktif_di_proyeksi ? '✓ Aktif di Proyeksi Stok' : 'Masukkan ke Proyeksi Stok'}
-                    </button>
-                  </div>
+                    <span>{c.nama}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${active ? 'bg-brand-800 text-emerald-100' : 'bg-stone-200 text-stone-600'}`}>
+                      {formatRupiah(c.harga_sekarang)}
+                    </span>
+                  </button>
                 );
               })}
             </div>
           </div>
-        </div>
-      ) : (
-        /* F8: Harga Lokal & Sinyal Global */
-        <div className="space-y-4">
-          {/* Global Exposure Score & Signals */}
-          <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-              <div>
-                <h3 className="font-bold text-base text-stone-900">
-                  5 Indikator Sinyal Global & Skor Eksposur Desa
-                </h3>
-                <p className="text-xs text-stone-600">
-                  Memantau dampak kurs, harga pupuk dunia, energi, dan logistik terhadap pangan desa
+
+          {/* Metric Cards Ringkasan Harga */}
+          {priceData && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-2xl border border-stone-200 bg-white p-3.5 shadow-xs">
+                <span className="text-[11px] font-semibold text-stone-500 block">Harga Terkini</span>
+                <p className="text-xl font-black text-stone-900 mt-0.5">
+                  {formatRupiah(priceData.harga_sekarang)}
                 </p>
+                <span className="text-[10px] text-stone-400">per {priceData.commodity.satuan}</span>
               </div>
-              <div className="px-3.5 py-2 rounded-xl bg-amber-50 border border-amber-300 text-right">
-                <span className="text-[11px] font-bold text-amber-900 block">Skor Eksposur Global Desa</span>
-                <span className="text-xl font-extrabold text-amber-950">
-                  {formatAngka(signalsData?.skor_eksposur_global || 14.2, 1)} / 100
-                </span>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {(signalsData?.sinyal || []).map((sig: any) => (
-                <div key={sig.kode} className="p-3 rounded-xl border border-stone-200 bg-stone-50/70">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-stone-700">{sig.nama}</span>
-                    <span
-                      className={`text-xs font-bold px-2 py-0.5 rounded ${
-                        sig.perubahan_14d_pct >= 5
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-stone-200 text-stone-800'
-                      }`}
-                    >
-                      {sig.perubahan_14d_pct >= 0 ? '+' : ''}
-                      {formatAngka(sig.perubahan_14d_pct, 1)}% (14 hr)
-                    </span>
-                  </div>
-                  <p className="text-lg font-extrabold text-stone-900 mt-1">
-                    {formatAngka(sig.nilai, 0)} <span className="text-xs font-normal">{sig.satuan}</span>
-                  </p>
-                  <p className="text-[11px] text-stone-600 mt-1">
-                    Terpapar: {(sig.komoditas_terpapar || []).join(', ')}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 3 Kartu Cerita Peristiwa Global */}
-          <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm space-y-3">
-            <h3 className="font-bold text-base text-stone-900">
-              Peristiwa Geopolitik & Guncangan Global (Simulasi)
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {eventsData.map((ev: any) => (
-                <div
-                  key={ev.id}
-                  className={`p-3.5 rounded-xl border flex flex-col justify-between gap-3 ${
-                    ev.aktif ? 'border-red-500 bg-red-50/60' : 'border-stone-200 bg-stone-50/50'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2 mb-1">
-                      <span className="font-bold text-sm text-stone-900">{ev.nama}</span>
-                      {ev.aktif && (
-                        <span className="px-2 py-0.5 text-[11px] font-bold rounded bg-red-600 text-white">
-                          AKTIF
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-stone-600">{ev.deskripsi}</p>
-                    <p className="text-[11px] font-semibold text-stone-700 mt-2">
-                      Terdampak: {(ev.komoditas_terdampak || []).join(', ')}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleTriggerEvent(ev.id, !ev.aktif)}
-                    className={`w-full min-h-[44px] rounded-xl font-bold text-xs transition ${
-                      ev.aktif
-                        ? 'bg-stone-800 text-white hover:bg-stone-900'
-                        : 'bg-amber-600 text-white hover:bg-amber-700'
+              <div className="rounded-2xl border border-stone-200 bg-white p-3.5 shadow-xs">
+                <span className="text-[11px] font-semibold text-stone-500 block">Perubahan Periode</span>
+                <div className="flex items-center gap-1 mt-0.5">
+                  {priceData.perubahan_pct > 0 ? (
+                    <ArrowUpRight className="w-4 h-4 text-red-600" />
+                  ) : priceData.perubahan_pct < 0 ? (
+                    <ArrowDownRight className="w-4 h-4 text-emerald-600" />
+                  ) : null}
+                  <p
+                    className={`text-xl font-black ${
+                      priceData.perubahan_pct > 5
+                        ? 'text-red-600'
+                        : priceData.perubahan_pct < 0
+                        ? 'text-emerald-600'
+                        : 'text-stone-900'
                     }`}
                   >
-                    {ev.aktif ? 'Hentikan Peristiwa Ini' : 'Picu Peristiwa Ini'}
-                  </button>
+                    {priceData.perubahan_pct > 0 ? `+${priceData.perubahan_pct}%` : `${priceData.perubahan_pct}%`}
+                  </p>
                 </div>
+                <span className="text-[10px] text-stone-400">
+                  {timeframe === 'hari' ? '30 hari terakhir' : timeframe === 'bulan' ? '12 bulan terakhir' : '5 tahun terakhir'}
+                </span>
+              </div>
+
+              <div className="rounded-2xl border border-stone-200 bg-white p-3.5 shadow-xs">
+                <span className="text-[11px] font-semibold text-stone-500 block">Harga Tertinggi</span>
+                <p className="text-xl font-black text-amber-700 mt-0.5">
+                  {formatRupiah(priceData.harga_tertinggi)}
+                </p>
+                <span className="text-[10px] text-stone-400">puncak periode</span>
+              </div>
+
+              <div className="rounded-2xl border border-stone-200 bg-white p-3.5 shadow-xs">
+                <span className="text-[11px] font-semibold text-stone-500 block">Harga Terendah</span>
+                <p className="text-xl font-black text-emerald-700 mt-0.5">
+                  {formatRupiah(priceData.harga_terendah)}
+                </p>
+                <span className="text-[10px] text-stone-400">dasar periode</span>
+              </div>
+            </div>
+          )}
+
+          {/* Grafik Utama */}
+          {priceData && (
+            <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-xs">
+              <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+                <div>
+                  <h3 className="font-extrabold text-stone-900 text-sm flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-brand-700" />
+                    Grafik Riwayat Harga {priceData.commodity.nama}
+                  </h3>
+                  <p className="text-xs text-stone-500">
+                    {timeframe === 'hari'
+                      ? 'Pergerakan harga harian 30 hari terakhir di pasar lokal Malang'
+                      : timeframe === 'bulan'
+                      ? 'Perkembangan harga bulanan sepanjang 12 bulan terakhir'
+                      : 'Tren pergerakan harga tahunan dalam kurun waktu 5 tahun (2022–2026)'}
+                  </p>
+                </div>
+                <div className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  Rata-rata: {formatRupiah(priceData.harga_rata_rata)}
+                </div>
+              </div>
+
+              {loadingPrice ? (
+                <div className="h-48 flex items-center justify-center text-xs text-stone-500">
+                  Memuat data grafik harga...
+                </div>
+              ) : (
+                <AccessibleLineChart
+                  title={`Tren Harga ${priceData.commodity.nama} (${timeframe === 'hari' ? '30 Hari' : timeframe === 'bulan' ? '12 Bulan' : '5 Tahun'})`}
+                  altDescription={`Grafik perkembangan harga ${priceData.commodity.nama} dalam rupiah per ${priceData.commodity.satuan}.`}
+                  data={priceData.series || []}
+                  xKey="label"
+                  unit="Rp"
+                  lines={[
+                    { key: 'harga', label: `Harga ${priceData.commodity.nama} (${priceData.commodity.satuan})`, color: '#0f766e' },
+                  ]}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Tabel Perbandingan Harga 10 Bahan Pokok */}
+          <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-xs">
+            <h3 className="font-extrabold text-stone-900 text-sm mb-1">
+              Daftar Pantauan 10 Bahan Pokok Desa
+            </h3>
+            <p className="text-xs text-stone-500 mb-3">
+              Klik salah satu bahan pangan untuk melihat pergerakan grafiknya di atas.
+            </p>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="border-b border-stone-200 text-stone-500 font-bold uppercase tracking-wider text-[10px]">
+                    <th className="py-2 px-3">Komoditas</th>
+                    <th className="py-2 px-3">Kelompok</th>
+                    <th className="py-2 px-3">Harga Sekarang</th>
+                    <th className="py-2 px-3">Stok Desa</th>
+                    <th className="py-2 px-3">Ketahanan</th>
+                    <th className="py-2 px-3 text-right">Aksi</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100">
+                  {(commodities || []).map((comm: any) => {
+                    const isSelected = comm.id === selectedCommId || comm.kode === selectedCommId;
+                    return (
+                      <tr
+                        key={comm.id}
+                        className={`hover:bg-stone-50 cursor-pointer transition ${isSelected ? 'bg-emerald-50/60 font-semibold' : ''}`}
+                        onClick={() => setSelectedCommId(comm.id)}
+                      >
+                        <td className="py-2.5 px-3">
+                          <div className="font-bold text-stone-900">{comm.nama}</div>
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <span className="capitalize px-2 py-0.5 rounded-full text-[10px] bg-stone-100 text-stone-700">
+                            {comm.kelompok || 'Pokok'}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <span className="font-extrabold text-stone-900">
+                            {formatRupiah(comm.harga_sekarang)}
+                          </span>
+                          <span className="text-stone-400 text-[10px]"> / {comm.satuan}</span>
+                        </td>
+                        <td className="py-2.5 px-3">
+                          {formatAngka(comm.stok_efektif, 0)} {comm.satuan}
+                        </td>
+                        <td className="py-2.5 px-3">
+                          <span
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                              comm.hari_bertahan >= 21
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : comm.hari_bertahan >= 7
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-red-100 text-red-800'
+                            }`}
+                          >
+                            {comm.hari_bertahan} hari
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedCommId(comm.id);
+                            }}
+                            className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition ${
+                              isSelected
+                                ? 'bg-brand-700 text-white'
+                                : 'bg-stone-100 hover:bg-stone-200 text-stone-700'
+                            }`}
+                          >
+                            {isSelected ? 'Sedang Ditampilkan' : 'Pilih Grafik'}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUB-TAB 2: BERITA PANGAN TERKINI DARI AI */}
+      {subTab === 'berita' && (
+        <div className="space-y-4">
+          {/* Banner Kurasi AI */}
+          <div className="rounded-2xl border border-blue-200 bg-blue-50/70 p-4">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shrink-0">
+                <Newspaper className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-extrabold text-stone-900 text-sm">
+                    Radar Berita Pangan AI (Real-time Feed)
+                  </h3>
+                  <AIBadge label="Kurasi AI Aktif" />
+                </div>
+                <p className="text-xs text-stone-700 leading-relaxed">
+                  Mesin AI SIAPANSA secara otomatis memantau dan mengagregasi berita cuaca BMKG, jalur distribusi logistik regional Jawa Timur, rilis Bulog, serta pergerakan pasar komoditas nasional yang berdampak langsung pada bahan pangan Desa Sumber Rejo.
+                </p>
+              </div>
+            </div>
+
+            {/* Filter Kategori Berita */}
+            <div className="flex gap-2 overflow-x-auto mt-3 pt-3 border-t border-blue-200/60">
+              {['semua', 'cuaca', 'distribusi', 'intervensi', 'global', 'pertanian'].map((kat) => (
+                <button
+                  key={kat}
+                  type="button"
+                  onClick={() => setFilterKategori(kat)}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold capitalize transition ${
+                    filterKategori === kat
+                      ? 'bg-blue-700 text-white shadow-xs'
+                      : 'bg-white text-stone-700 hover:bg-blue-100/60 border border-blue-200'
+                  }`}
+                >
+                  {kat === 'semua' ? 'Semua Berita' : kat}
+                </button>
               ))}
             </div>
           </div>
 
-          {/* Price History 104 Weeks + 4 Weeks Forecast */}
-          <div className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <h3 className="font-bold text-base text-stone-900">
-                  Riwayat Harga Lokal 2 Tahun (104 Minggu) & Prediksi 4 Minggu
-                </h3>
-                <p className="text-xs text-stone-600">
-                  Metode: {priceData?.metode_model || 'Holt-Winters ExponentialSmoothing'} dengan rentang keyakinan 80%
-                </p>
-              </div>
-              <select
-                value={selectedCommId}
-                onChange={(e) => setSelectedCommId(e.target.value)}
-                className="min-h-[44px] px-3 rounded-xl border border-stone-300 bg-white text-sm font-bold"
-              >
-                {commodities.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.nama} ({formatRupiah(c.harga_sekarang)}/{c.satuan})
-                  </option>
-                ))}
-              </select>
+          {/* Daftar Kartu Berita */}
+          {loadingNews ? (
+            <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center text-xs text-stone-500">
+              Memuat kurasi berita pangan AI...
             </div>
+          ) : filteredNews.length === 0 ? (
+            <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center text-xs text-stone-500">
+              Tidak ada berita untuk kategori ini.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredNews.map((news) => (
+                <article
+                  key={news.id}
+                  className="rounded-2xl border border-stone-200 bg-white p-4 shadow-xs hover:border-brand-500 hover:shadow-sm transition flex flex-col justify-between space-y-3"
+                >
+                  <div>
+                    {/* Header Berita: Kategori, Waktu, & Dampak */}
+                    <div className="flex items-center justify-between gap-2 mb-2 flex-wrap">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-stone-100 text-stone-700">
+                          {news.kategori}
+                        </span>
+                        <span className="text-[11px] text-stone-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {news.waktu}
+                        </span>
+                      </div>
 
-            {priceData && (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
-                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-200">
-                    <span className="text-stone-500 block">Harga Sekarang</span>
-                    <span className="text-base font-extrabold text-stone-900">
-                      {formatRupiah(priceData.harga_sekarang)}/{priceData.satuan}
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                          news.tingkat_dampak === 'Tinggi'
+                            ? 'bg-red-100 text-red-800'
+                            : news.tingkat_dampak === 'Sedang'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}
+                      >
+                        Dampak {news.tingkat_dampak}
+                      </span>
+                    </div>
+
+                    {/* Judul & Ringkasan */}
+                    <h4 className="font-extrabold text-stone-900 text-sm leading-snug mb-2">
+                      {news.judul}
+                    </h4>
+                    <p className="text-xs text-stone-600 leading-relaxed mb-3">
+                      {news.ringkasan}
+                    </p>
+
+                    {/* Pengaruh Harga AI Callout */}
+                    <div className="p-2.5 rounded-xl bg-stone-50 border border-stone-200 mb-3 text-xs">
+                      <div className="flex items-start gap-1.5 text-stone-800 font-semibold mb-0.5">
+                        <Sparkles className="w-3.5 h-3.5 text-amber-600 shrink-0 mt-0.5" />
+                        <span>Pengaruh Harga Pangan:</span>
+                      </div>
+                      <p className="text-[11px] text-stone-600 pl-5">
+                        {news.pengaruh_harga}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Footer Berita: Komoditas & Sumber */}
+                  <div className="pt-2 border-t border-stone-100 flex flex-wrap items-center justify-between gap-2 text-[10px]">
+                    <div className="flex items-center gap-1 flex-wrap">
+                      <span className="text-stone-400">Komoditas:</span>
+                      {news.komoditas_terdampak.map((k: string) => (
+                        <span key={k} className="px-1.5 py-0.5 rounded bg-brand-50 text-brand-800 font-bold">
+                          {k}
+                        </span>
+                      ))}
+                    </div>
+                    <span className="text-stone-400 italic truncate max-w-[200px]" title={news.sumber}>
+                      {news.sumber}
                     </span>
                   </div>
-                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-200">
-                    <span className="text-stone-500 block">Perubahan 7 Hari</span>
-                    <span
-                      className={`text-base font-extrabold ${
-                        priceData.perubahan_7d_pct >= 10 ? 'text-red-700' : 'text-stone-900'
-                      }`}
-                    >
-                      {priceData.perubahan_7d_pct >= 0 ? '+' : ''}
-                      {formatAngka(priceData.perubahan_7d_pct, 1)}%
-                    </span>
+                </article>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* SUB-TAB 3: HASIL ANALISIS AI DARI BERITA & PASAR */}
+      {subTab === 'ai-analisis' && (
+        <div className="space-y-4">
+          {/* Executive Summary Card */}
+          {aiSummary ? (
+            <>
+              <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-amber-200/80">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                      <Sparkles className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-extrabold text-stone-900 text-base">
+                          Sintesis Analisis Dampak Pangan AI
+                        </h3>
+                        <AIBadge label="AI Decision Engine" />
+                      </div>
+                      <p className="text-xs text-stone-600">
+                        Lokasi: <strong>{aiSummary.desa}</strong> · Pembaruan: {aiSummary.as_of}
+                      </p>
+                    </div>
                   </div>
-                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-200">
-                    <span className="text-stone-500 block">Prediksi 4 Minggu</span>
-                    <span className="text-base font-extrabold text-amber-800">
-                      {priceData.prediksi_4w_pct >= 0 ? '+' : ''}
-                      {formatAngka(priceData.prediksi_4w_pct, 1)}%
-                    </span>
-                  </div>
-                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-200">
-                    <span className="text-stone-500 block">Indikator Volatilitas</span>
-                    <span className="text-base font-extrabold text-stone-900">
-                      {priceData.volatilitas} (CV {formatAngka(priceData.koefisien_variasi_pct, 1)}%)
+
+                  <div className="flex items-center gap-2 self-start sm:self-auto bg-white px-3.5 py-2 rounded-xl border border-amber-200 shadow-xs">
+                    <div>
+                      <span className="text-[10px] text-stone-400 block font-bold uppercase">Skor Risiko Pasar</span>
+                      <p className="text-lg font-black text-amber-700 leading-tight">
+                        {aiSummary.skor_risiko_pasar} <span className="text-xs text-stone-400">/ 100</span>
+                      </p>
+                    </div>
+                    <span className="px-2 py-1 rounded-lg text-xs font-black bg-amber-100 text-amber-800">
+                      {aiSummary.status_risiko}
                     </span>
                   </div>
                 </div>
 
-                <AccessibleLineChart
-                  title={`Grafik Harga ${priceData.nama} (24 Minggu Terakhir + 4 Minggu Prediksi)`}
-                  altDescription={`Grafik perkembangan harga ${priceData.nama} dalam rupiah per ${priceData.satuan} beserta rentang prediksi 80 persen.`}
-                  data={[
-                    ...(priceData.riwayat_104_minggu || []).slice(-24).map((r: any) => ({
-                      periode: formatTanggalIndo(r.tanggal),
-                      harga_aktual: r.harga,
-                      batas_atas: r.harga,
-                      batas_bawah: r.harga,
-                    })),
-                    ...(priceData.prediksi_4_minggu || []).map((f: any) => ({
-                      periode: `Pred M+${f.minggu_ke_depan}`,
-                      harga_aktual: f.harga_prediksi,
-                      batas_atas: f.batas_atas_80,
-                      batas_bawah: f.batas_bawah_80,
-                    })),
-                  ]}
-                  xKey="periode"
-                  unit="Rp"
-                  lines={[
-                    { key: 'harga_aktual', label: 'Harga / Prediksi Median', color: '#15803d' },
-                    { key: 'batas_atas', label: 'Batas Atas Rentang 80%', color: '#d97706', dashed: true },
-                    { key: 'batas_bawah', label: 'Batas Bawah Rentang 80%', color: '#64748b', dashed: true },
-                  ]}
-                />
-              </>
-            )}
-          </div>
+                <p className="text-xs text-stone-800 leading-relaxed mt-3 font-medium">
+                  {aiSummary.ringkasan_eksekutif}
+                </p>
+              </div>
+
+              {/* Dampak Per Kelompok Komoditas */}
+              <div className="space-y-2">
+                <h3 className="font-extrabold text-stone-900 text-sm flex items-center gap-2">
+                  <ShieldAlert className="w-4 h-4 text-brand-700" />
+                  Dampak Berita & Pasar Terhadap Kelompok Bahan Pangan
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {(aiSummary.dampak_kelompok || []).map((dk: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="rounded-2xl border border-stone-200 bg-white p-4 shadow-xs space-y-2 flex flex-col justify-between"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <h4 className="font-extrabold text-stone-900 text-xs">{dk.kelompok}</h4>
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
+                              dk.status === 'Aman'
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : dk.status === 'Waspada Tinggi'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-amber-100 text-amber-800'
+                            }`}
+                          >
+                            {dk.status}
+                          </span>
+                        </div>
+
+                        <div className="text-[11px] font-semibold text-stone-500 mb-2">
+                          Tren Harga: <strong className="text-stone-900">{dk.tren_harga}</strong>
+                        </div>
+
+                        <p className="text-xs text-stone-600 leading-relaxed mb-2">
+                          {dk.dampak}
+                        </p>
+                      </div>
+
+                      <div className="pt-2 border-t border-stone-100 text-[11px] bg-stone-50 p-2 rounded-xl text-stone-700">
+                        <strong className="text-brand-800">Rekomendasi AI:</strong> {dk.rekomendasi_singkat}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3 Rekomendasi Tindakan Strategis Pemerintah Desa */}
+              <div className="space-y-2 pt-2">
+                <h3 className="font-extrabold text-stone-900 text-sm flex items-center gap-2">
+                  <Lightbulb className="w-4 h-4 text-amber-600" />
+                  Rekomendasi Strategis AI untuk Aparatur Desa Sumber Rejo
+                </h3>
+
+                <div className="space-y-3">
+                  {(aiSummary.rekomendasi_strategis || []).map((rek: any) => (
+                    <div
+                      key={rek.nomor}
+                      className="rounded-2xl border border-stone-200 bg-white p-4 shadow-xs flex flex-col sm:flex-row items-start justify-between gap-4"
+                    >
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="w-6 h-6 rounded-full bg-brand-700 text-white text-xs font-black flex items-center justify-center shrink-0">
+                            {rek.nomor}
+                          </span>
+                          <h4 className="font-extrabold text-stone-900 text-sm">
+                            {rek.judul}
+                          </h4>
+                          <span
+                            className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold ${
+                              rek.prioritas.includes('Segera')
+                                ? 'bg-red-100 text-red-800'
+                                : rek.prioritas.includes('Jangka Pendek')
+                                ? 'bg-amber-100 text-amber-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}
+                          >
+                            {rek.prioritas}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-stone-600 leading-relaxed pl-8">
+                          {rek.deskripsi}
+                        </p>
+
+                        <div className="pl-8 pt-1 text-[11px] text-emerald-800 flex items-center gap-1.5 font-semibold">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>Target Dampak: {rek.indikator_keberhasilan}</span>
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      <div className="self-end sm:self-center pl-8 sm:pl-0">
+                        {rek.nomor === 1 ? (
+                          <button
+                            type="button"
+                            onClick={() => onNavigate('jaringan')}
+                            className="px-3 py-1.5 rounded-xl bg-brand-700 hover:bg-brand-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                          >
+                            <span>Mitra Tumpakrejo</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        ) : rek.nomor === 2 ? (
+                          <button
+                            type="button"
+                            onClick={() => onNavigate('stok')}
+                            className="px-3 py-1.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                          >
+                            <span>Cek Lumbung Padi</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => onNavigate('jaringan')}
+                            className="px-3 py-1.5 rounded-xl bg-blue-700 hover:bg-blue-800 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs"
+                          >
+                            <span>Buka Jaringan Desa</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center text-xs text-stone-500">
+              {loadingSummary ? 'Menghitung sintesis analisis AI...' : 'Data analisis AI belum tersedia.'}
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 };
+
+export const PredictAndGlobalView = AnalysisView;
+
 
 /**
  * F6: Simulator Guncangan

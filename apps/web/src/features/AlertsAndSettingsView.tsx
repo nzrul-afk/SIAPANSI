@@ -51,7 +51,7 @@ export const AlertsListView: React.FC<{
   };
 
   const handleActionClick = (tindakan: string) => {
-    if (tindakan === 'jalankan_simulasi') onNavigate('prediksi');
+    if (tindakan === 'jalankan_simulasi') onNavigate('analisis');
     else if (tindakan === 'lihat_bantuan') onNavigate('jaringan');
     else onNavigate('stok');
   };

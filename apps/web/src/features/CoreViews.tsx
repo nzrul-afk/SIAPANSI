@@ -233,15 +233,15 @@ export const DashboardView: React.FC<{
 
         <button
           type="button"
-          onClick={() => onNavigate('prediksi')}
+          onClick={() => onNavigate('analisis')}
           className="p-3 rounded-2xl bg-white border border-stone-200 hover:border-brand-500 hover:shadow-xs text-left transition flex items-center gap-2.5 group"
         >
           <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center shrink-0 group-hover:bg-amber-600 group-hover:text-white transition">
-            <Sprout className="w-4 h-4" />
+            <TrendingUp className="w-4 h-4" />
           </div>
           <div>
-            <p className="font-extrabold text-xs text-stone-900 leading-tight">Prediksi Panen</p>
-            <p className="text-[10px] text-stone-500">Estimasi Hasil</p>
+            <p className="font-extrabold text-xs text-stone-900 leading-tight">Analisis Pangan</p>
+            <p className="text-[10px] text-stone-500">Tren & Berita AI</p>
           </div>
         </button>
 

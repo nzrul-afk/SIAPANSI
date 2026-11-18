@@ -69,10 +69,10 @@ export const StatusBadge: React.FC<{
 /**
  * 10.1 & 14.2 AIBadge: Label wajib pada setiap keluaran AI
  */
-export const AIBadge: React.FC<{ sumber?: string }> = ({ sumber }) => (
+export const AIBadge: React.FC<{ sumber?: string; label?: string }> = ({ sumber, label }) => (
   <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-indigo-50 text-indigo-900 border border-indigo-200 text-xs font-medium">
     <Sparkles className="w-3.5 h-3.5 text-indigo-700 shrink-0" />
-    <span>Dibuat AI, periksa kembali sebelum bertindak</span>
+    <span>{label || 'Dibuat AI, periksa kembali sebelum bertindak'}</span>
     {sumber === 'template' || sumber === 'template_fallback' ? (
       <span className="text-[11px] text-indigo-700">(Mode Template)</span>
     ) : null}

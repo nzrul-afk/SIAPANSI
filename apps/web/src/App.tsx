@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  Bell, FileText, Home, LogOut, Package, Settings, Sprout, Truck,
+  Bell, FileText, Home, LogOut, Package, Settings, TrendingUp, Truck,
 } from 'lucide-react';
 import {
   apiRequest, isOfflineNow, setSimulatedOffline, subscribeNetworkChange, syncOfflineQueueNow,
@@ -10,19 +10,19 @@ import { OfflineBanner } from './components/common/Primitives';
 import { StockOpnameModal, StockTransactionSheet } from './features/StockSheet';
 import { DashboardView, LoginView, PublicReportView, StockView } from './features/CoreViews';
 import {
-  PredictAndGlobalView, ReportView, VillageNetworkView,
+  AnalysisView, ReportView, VillageNetworkView,
 } from './features/AdvancedViews';
 import { AlertsListView, SettingsAndDemoView } from './features/AlertsAndSettingsView';
 
 type Tab =
-  | 'beranda' | 'stok' | 'peringatan' | 'prediksi'
+  | 'beranda' | 'stok' | 'peringatan' | 'analisis'
   | 'jaringan' | 'laporan' | 'pengaturan';
 
 const NAV: Array<{ id: Tab; label: string; icon: any }> = [
   { id: 'beranda', label: 'Beranda', icon: Home },
   { id: 'stok', label: 'Stok', icon: Package },
   { id: 'peringatan', label: 'Peringatan', icon: Bell },
-  { id: 'prediksi', label: 'Prediksi', icon: Sprout },
+  { id: 'analisis', label: 'Analisis', icon: TrendingUp },
   { id: 'jaringan', label: 'Desa', icon: Truck },
   { id: 'laporan', label: 'Laporan', icon: FileText },
   { id: 'pengaturan', label: 'Lainnya', icon: Settings },
@@ -130,7 +130,7 @@ const App: React.FC = () => {
           <StockView overview={overview} warehouses={warehouses} onOpenSheet={openSheet} onOpname={setOpnameComm} />
         )}
         {tab === 'peringatan' && <AlertsListView onNavigate={go} onRefreshOverview={refresh} />}
-        {tab === 'prediksi' && <PredictAndGlobalView commodities={comms} onRefreshOverview={refresh} onNavigate={go} />}
+        {tab === 'analisis' && <AnalysisView commodities={comms} onRefreshOverview={refresh} onNavigate={go} />}
         {tab === 'jaringan' && <VillageNetworkView offline={offline} onRefreshOverview={refresh} />}
         {tab === 'laporan' && <ReportView />}
         {tab === 'pengaturan' && <SettingsAndDemoView commodities={comms} onRefreshOverview={refresh} onNavigate={go} />}

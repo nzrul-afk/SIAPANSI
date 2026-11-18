@@ -863,6 +863,236 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
     };
   }
 
+  // 7. Analysis & Price Trends (Grafik Harga, Berita AI, Hasil Analisis AI)
+  if (cleanPath.startsWith('/analysis/prices')) {
+    const cid = urlObj.searchParams.get('commodity') || 'c-beras';
+    const tf = (urlObj.searchParams.get('timeframe') || 'hari').toLowerCase();
+    const comm = stateOverview.komoditas.find((c: any) => c.id === cid || c.kode === cid) || stateOverview.komoditas[0];
+    const baseP = comm.harga_sekarang || 14500;
+
+    const series: Array<{ label: string; tanggal: string; harga: number }> = [];
+
+    if (tf === 'hari') {
+      const now = new Date('2026-11-18');
+      const bulanShort = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(now.getTime() - i * 86400000);
+        const dayStr = `${d.getDate()} ${bulanShort[d.getMonth()]}`;
+        const iso = d.toISOString().split('T')[0];
+        let deltaFactor = 0;
+        if (comm.kode === 'cabai_rawit') {
+          deltaFactor = i < 8 ? (8 - i) * 0.022 : -0.04 + Math.sin(i / 3) * 0.03;
+        } else if (comm.kode === 'bawang_merah') {
+          deltaFactor = i < 10 ? (10 - i) * 0.014 : -0.02 + Math.sin(i / 4) * 0.02;
+        } else if (comm.kode === 'terigu') {
+          const eventAktif = stateEvents.find((e) => e.id === 'evt-1')?.aktif;
+          deltaFactor = eventAktif ? (i < 14 ? 0.19 : 0.0) : Math.sin(i / 5) * 0.01;
+        } else {
+          deltaFactor = Math.sin(i / 5) * 0.015 - (i / 29) * 0.01;
+        }
+        const p = Math.round(baseP * (1 + deltaFactor));
+        series.push({ label: dayStr, tanggal: iso, harga: p });
+      }
+    } else if (tf === 'bulan') {
+      const months = [
+        'Des 25', 'Jan 26', 'Feb 26', 'Mar 26', 'Apr 26', 'Mei 26',
+        'Jun 26', 'Jul 26', 'Agu 26', 'Sep 26', 'Okt 26', 'Nov 26',
+      ];
+      months.forEach((m, idx) => {
+        let factor = 1.0;
+        if (comm.kode === 'beras') {
+          factor = [1.02, 1.04, 1.01, 0.96, 0.94, 0.97, 0.99, 1.00, 1.01, 1.02, 1.03, 1.0][idx];
+        } else if (comm.kode === 'cabai_rawit') {
+          factor = [1.15, 1.25, 1.10, 0.85, 0.80, 0.82, 0.90, 0.95, 1.00, 1.05, 1.12, 1.0][idx];
+        } else if (comm.kode === 'bawang_merah') {
+          factor = [1.08, 1.12, 1.05, 0.88, 0.85, 0.90, 0.94, 0.98, 1.00, 1.02, 1.06, 1.0][idx];
+        } else {
+          factor = 1.0 - (11 - idx) * 0.008 + Math.sin(idx / 2) * 0.02;
+        }
+        const p = Math.round(baseP * factor);
+        series.push({ label: m, tanggal: m, harga: p });
+      });
+    } else {
+      const years = ['2022', '2023', '2024', '2025', '2026'];
+      years.forEach((yr, idx) => {
+        const growthRates = [0.76, 0.83, 0.91, 0.96, 1.0];
+        const p = Math.round(baseP * growthRates[idx]);
+        series.push({ label: yr, tanggal: yr, harga: p });
+      });
+    }
+
+    const pricesArr = series.map((s) => s.harga);
+    const minP = Math.min(...pricesArr);
+    const maxP = Math.max(...pricesArr);
+    const avgP = Math.round(pricesArr.reduce((a, b) => a + b, 0) / pricesArr.length);
+    const startP = pricesArr[0];
+    const endP = pricesArr[pricesArr.length - 1];
+    const changePct = +(((endP - startP) / startP) * 100).toFixed(1);
+
+    return {
+      commodity: {
+        id: comm.id,
+        kode: comm.kode,
+        nama: comm.nama,
+        satuan: comm.satuan,
+        kelompok: comm.kelompok,
+      },
+      timeframe: tf,
+      harga_sekarang: endP,
+      harga_tertinggi: maxP,
+      harga_terendah: minP,
+      harga_rata_rata: avgP,
+      perubahan_pct: changePct,
+      series,
+    };
+  }
+
+  if (cleanPath.startsWith('/analysis/news')) {
+    return {
+      berita: [
+        {
+          id: 'news-1',
+          judul: 'Curah Hujan Tinggi di Jalur Malang Selatan Hambat Pengiriman Cabai & Bawang',
+          ringkasan: 'Akses logistik jalur lintas selatan tergenang air pasca hujan deras 3 hari berturut-turut. Pengiriman hortikultura dari sentra tani terhambat 25%, pedagang pasar mulai menaikkan harga cabai rawit dan bawang merah.',
+          sumber: 'Radar Logistik Pangan AI - Pantauan Satelit BMKG & LLAJ Jatim',
+          waktu: 'Hari ini, 08:30 WIB',
+          tingkat_dampak: 'Tinggi',
+          sentimen: 'waspada',
+          komoditas_terdampak: ['Cabai rawit merah', 'Bawang merah'],
+          pengaruh_harga: 'Potensi kenaikan harga eceran +15% s.d +22% dalam 3-5 hari ke depan.',
+          kategori: 'Cuaca & Distribusi',
+        },
+        {
+          id: 'news-2',
+          judul: 'Bulog Kantor Cabang Malang Distribusikan Cadangan Beras SPHP ke Lumbung Desa',
+          ringkasan: 'Sebanyak 150 ton beras medium Stabilisasi Pasokan dan Harga Pangan (SPHP) disalurkan ke jaringan lumbung desa dan pasar tradisional guna mengantisipasi spekulasi harga jelang musim hujan.',
+          sumber: 'AI Kebijakan Pangan - Siaran Pers Bulog Jawa Timur',
+          waktu: 'Kemarin, 14:15 WIB',
+          tingkat_dampak: 'Sedang',
+          sentimen: 'positif',
+          komoditas_terdampak: ['Beras'],
+          pengaruh_harga: 'Harga beras di tingkat eceran tetap stabil di bawah HET Rp 14.500/kg.',
+          kategori: 'Intervensi Pasar',
+        },
+        {
+          id: 'news-3',
+          judul: 'Kenaikan Harga Minyak Sawit Mentah (CPO) Global Berimbas ke Minyak Curah',
+          ringkasan: 'Indeks komoditas nabati internasional naik 4,2% menyusul pengetatan ekspor produsen utama. Pedagang grosir regional mulai menyesuaikan harga minyak goreng curah di pasar rakyat.',
+          sumber: 'AI Sinyal Komoditas Global - Analisis Data Bappebti & FAO',
+          waktu: 'Kemarin, 10:00 WIB',
+          tingkat_dampak: 'Sedang',
+          sentimen: 'waspada',
+          komoditas_terdampak: ['Minyak goreng curah'],
+          pengaruh_harga: 'Kenaikan bertahap Rp 500 - Rp 1.000 per liter pada tingkat pengecer.',
+          kategori: 'Pasar Global',
+        },
+        {
+          id: 'news-4',
+          judul: 'Pasokan Jagung Pakan Jawa Timur Surplus, Harga Telur Ayam di Blitar Stabil',
+          ringkasan: 'Panen jagung pipil di sentra Blitar dan Kediri mencukupi serapan peternak lokal. Pasokan telur ayam ke wilayah Malang Raya terpantau lancar tanpa indikasi lonjakan harga.',
+          sumber: 'AI Agrikultur & Peternakan - Dinas Peternakan Prov. Jatim',
+          waktu: '2 hari lalu',
+          tingkat_dampak: 'Rendah',
+          sentimen: 'positif',
+          komoditas_terdampak: ['Jagung pipil kering', 'Telur ayam ras'],
+          pengaruh_harga: 'Harga stabil di kisaran Rp 27.500 - Rp 28.500/kg telur ayam.',
+          kategori: 'Produksi Ternak',
+        },
+        {
+          id: 'news-5',
+          judul: 'Alokasi Pupuk Subsidi Tahap Akhir Disalurkan, Petani Padi Mulai Olah Tanah',
+          ringkasan: 'Distribusi pupuk urea dan NPK bersubsidi di Kabupaten Malang mencapai 88%. Petani Desa Sumber Rejo dan Tumpakrejo siap memulai penanaman musim pertama.',
+          sumber: 'AI Pemantau Tani - Dinas Ketahanan Pangan Kab. Malang',
+          waktu: '3 hari lalu',
+          tingkat_dampak: 'Sedang',
+          sentimen: 'positif',
+          komoditas_terdampak: ['Beras', 'Jagung pipil kering'],
+          pengaruh_harga: 'Menjamin kepastian pasokan panen 90-100 hari mendatang.',
+          kategori: 'Input Pertanian',
+        },
+        {
+          id: 'news-6',
+          judul: 'Penyesuaian Biaya Logistik Pelabuhan Berdampak Minor pada Gula Pasir & Terigu',
+          ringkasan: 'Tarif bongkar muat pelabuhan Tanjung Perak naik tipis, namun rantai pasok distributor terigu dan gula pasir di Jawa Timur masih menyerap biaya tanpa kenaikan drastis.',
+          sumber: 'AI Rantai Pasok - Asosiasi Logistik & Pedagang Bahan Pokok',
+          waktu: '4 hari lalu',
+          tingkat_dampak: 'Rendah',
+          sentimen: 'netral',
+          komoditas_terdampak: ['Gula pasir', 'Terigu'],
+          pengaruh_harga: 'Fluktuasi harga terbatas di bawah 1,5%.',
+          kategori: 'Logistik & Impor',
+        },
+      ],
+    };
+  }
+
+  if (cleanPath.startsWith('/analysis/ai-summary')) {
+    return {
+      skor_risiko_pasar: 64,
+      status_risiko: 'Waspada Terkendali',
+      as_of: '18 November 2026',
+      desa: 'Desa Sumber Rejo',
+      ringkasan_eksekutif: 'Analisis AI SIAPANSA mengidentifikasi risiko ketahanan pangan Desa Sumber Rejo berada pada level Waspada Terkendali (Skor 64/100). Ketahanan komoditas karbohidrat utama (Beras & Singkong) sangat tangguh (38 hari), namun komoditas hortikultura (Cabai Rawit Merah & Bawang Merah) mengalami tekanan inflasi lokal hingga +18% akibat kendala logistik cuaca hujan deras di jalur Malang Selatan.',
+      dampak_kelompok: [
+        {
+          kelompok: 'Pangan Pokok (Beras, Jagung, Singkong, Terigu)',
+          status: 'Aman',
+          tingkat_risiko: 'Rendah',
+          tren_harga: '+0.5% (Stabil)',
+          dampak: 'Stok lumbung desa Sumber Rejo mencukupi 38 hari. Pasokan intervensi beras SPHP Bulog Malang menahan potensi lonjakan harga pasar lokal.',
+          rekomendasi_singkat: 'Pertahankan rotasi lumbung desa dengan prinsip FIFO.',
+        },
+        {
+          kelompok: 'Hortikultura (Cabai Rawit & Bawang Merah)',
+          status: 'Waspada Tinggi',
+          tingkat_risiko: 'Tinggi',
+          tren_harga: '+14% s.d +22% (Lonjakan Cepat)',
+          dampak: 'Genangan jalan logistik mengurangi pasokan pasar desa sebesar 25%. Pedagang eceran mulai menaikkan harga jual harian.',
+          rekomendasi_singkat: 'Segera gelar operasi pasar desa atau barter dengan desa mitra.',
+        },
+        {
+          kelompok: 'Protein & Olahan (Telur Ayam, Kedelai)',
+          status: 'Waspada',
+          tingkat_risiko: 'Sedang',
+          tren_harga: '+2.8% (Fluktuasi Terbatas)',
+          dampak: 'Pasokan telur ayam dari sentra Blitar aman dan harga pakan jagung stabil, tetapi harga kedelai impor untuk pengrajin tahu-tempe rentan fluktuasi kurs.',
+          rekomendasi_singkat: 'Pantau harga beli pengrajin tahu-tempe lokal per 3 hari.',
+        },
+        {
+          kelompok: 'Pelengkap (Minyak Goreng, Gula Pasir)',
+          status: 'Waspada',
+          tingkat_risiko: 'Sedang',
+          tren_harga: '+3.5% (Kenaikan Perlahan)',
+          dampak: 'Penguatan harga CPO global menaikkan harga minyak goreng curah di distributor regional sebesar Rp 500/liter.',
+          rekomendasi_singkat: 'Pastikan ketersediaan stok cadangan toko desa minimal 25 hari.',
+        },
+      ],
+      rekomendasi_strategis: [
+        {
+          nomor: 1,
+          prioritas: 'Segera (1–3 Hari)',
+          judul: 'Operasi Pasar Desa untuk Cabai Rawit & Bawang Merah',
+          deskripsi: 'Pemerintah Desa Sumber Rejo bersama BUMDes mengalokasikan cadangan kas pangan untuk membeli langsung cabai dan bawang dari petani mitra Desa Tumpakrejo yang memiliki kebun hortikultura, lalu menjualnya dengan harga pokok di Balai Desa.',
+          indikator_keberhasilan: 'Meredam lonjakan harga eceran di desa sebesar Rp 5.000–8.000/kg dan mencegah panic buying.',
+        },
+        {
+          nomor: 2,
+          prioritas: 'Jangka Pendek (1–2 Minggu)',
+          judul: 'Inspeksi Kelembapan Lumbung Padi Menghadapi Puncak Hujan',
+          deskripsi: 'Petugas lumbung desa bersama Gapoktan memeriksa sirkulasi udara dan palet kayu di Lumbung Pangan Desa dan Gudang Poktan agar 17,1 ton beras simpanan terhindar dari kelembapan tinggi dan hama gudang.',
+          indikator_keberhasilan: 'Menjaga losses (susut mutu) gabah/beras simpanan tetap di bawah 0,5%.',
+        },
+        {
+          nomor: 3,
+          prioritas: 'Mitigasi Strategis (1 Bulan)',
+          judul: 'Aktivasi Barter Logistik Antar-Desa Sumber Rejo & Tumpakrejo',
+          deskripsi: 'Mengoptimalkan fitur Jaringan Desa untuk pertukaran pangan bilateral: menukar sebagian surplus beras Sumber Rejo dengan komoditas hortikultura dan palawija dari Tumpakrejo dengan sistem kliring desa.',
+          indikator_keberhasilan: 'Menjamin stabilitas konsumsi warga desa tanpa bergantung pada fluktuasi distributor luar.',
+        },
+      ],
+    };
+  }
+
   // 7. Prices & Global Signals (F8)
   if (cleanPath.startsWith('/prices/')) {
     const cid = cleanPath.split('/')[2] || 'c-terigu';

@@ -14,6 +14,7 @@ import {
   FileText,
   Filter,
   Package,
+  Plus,
   Printer,
   Scale,
   Search,
@@ -24,6 +25,7 @@ import {
   TrendingUp,
   Truck,
   Warehouse,
+  X,
   Zap,
 } from 'lucide-react';
 import { apiRequest, getApiBase, setCustomApiBase } from '../lib/api';
@@ -424,13 +426,183 @@ export const DashboardView: React.FC<{
   );
 };
 
+export const AddCommodityModal: React.FC<{
+  open: boolean;
+  onClose: () => void;
+  onSuccess: (nama: string) => void;
+}> = ({ open, onClose, onSuccess }) => {
+  const [nama, setNama] = useState('');
+  const [satuan, setSatuan] = useState('kg');
+  const [kelompok, setKelompok] = useState<'pokok' | 'protein' | 'pelengkap'>('pokok');
+  const [stokAwal, setStokAwal] = useState('');
+  const [kebutuhanHarian, setKebutuhanHarian] = useState('');
+  const [hargaSekarang, setHargaSekarang] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  if (!open) return null;
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!nama.trim()) {
+      setError('Nama komoditas wajib diisi.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await apiRequest('/stock/commodity', {
+        method: 'POST',
+        body: JSON.stringify({
+          nama: nama.trim(),
+          satuan: satuan.trim() || 'kg',
+          kelompok,
+          stok_awal: parseFloat(stokAwal) || 0,
+          kebutuhan_harian: parseFloat(kebutuhanHarian) || (kelompok === 'pokok' ? 45 : kelompok === 'protein' ? 25 : 15),
+          harga_sekarang: parseFloat(hargaSekarang) || 12000,
+        }),
+      });
+      onSuccess(nama.trim());
+      onClose();
+    } catch (err: any) {
+      setError(err?.message || 'Gagal menambahkan komoditas.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-stone-200 p-5 space-y-4 max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between pb-2 border-b border-stone-200">
+          <div>
+            <h3 className="text-base font-extrabold text-stone-900">Tambah Komoditas Pangan Kustom</h3>
+            <p className="text-xs text-stone-500">Ketik bebas bahan pangan yang ada di desa</p>
+          </div>
+          <button type="button" onClick={onClose} className="p-1.5 rounded-lg text-stone-500 hover:bg-stone-100" aria-label="Tutup">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {error && (
+          <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-xs font-semibold text-red-700">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+          <div>
+            <label className="block font-bold text-stone-700 mb-1">
+              Nama Komoditas <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              value={nama}
+              onChange={(e) => setNama(e.target.value)}
+              placeholder="Contoh: Ubi Madu, Ikan Nila, Jagung Manis, Tempe..."
+              className="w-full p-2.5 rounded-xl border border-stone-300 font-medium text-sm focus:ring-2 focus:ring-brand-500"
+              required
+              autoFocus
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block font-bold text-stone-700 mb-1">Kelompok Pangan</label>
+              <select
+                value={kelompok}
+                onChange={(e: any) => setKelompok(e.target.value)}
+                className="w-full p-2.5 rounded-xl border border-stone-300 font-medium bg-white"
+              >
+                <option value="pokok">Pokok (Karbohidrat)</option>
+                <option value="protein">Protein (Hewani/Nabati)</option>
+                <option value="pelengkap">Pelengkap (Bumbu/Minyak)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-bold text-stone-700 mb-1">Satuan</label>
+              <input
+                type="text"
+                value={satuan}
+                onChange={(e) => setSatuan(e.target.value)}
+                placeholder="kg, liter, ikat, dll."
+                className="w-full p-2.5 rounded-xl border border-stone-300 font-medium"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="block font-bold text-stone-700 mb-1">Stok Awal ({satuan || 'kg'})</label>
+              <input
+                type="number"
+                step="any"
+                min="0"
+                value={stokAwal}
+                onChange={(e) => setStokAwal(e.target.value)}
+                placeholder="0"
+                className="w-full p-2.5 rounded-xl border border-stone-300 font-medium"
+              />
+            </div>
+            <div>
+              <label className="block font-bold text-stone-700 mb-1">Kebutuhan Harian Desa</label>
+              <input
+                type="number"
+                step="any"
+                min="0.1"
+                value={kebutuhanHarian}
+                onChange={(e) => setKebutuhanHarian(e.target.value)}
+                placeholder={kelompok === 'pokok' ? '45 kg/hari' : kelompok === 'protein' ? '25 kg/hari' : '15 kg/hari'}
+                className="w-full p-2.5 rounded-xl border border-stone-300 font-medium"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-bold text-stone-700 mb-1">Estimasi Harga Pasar (Rp/{satuan || 'kg'})</label>
+            <input
+              type="number"
+              step="100"
+              min="0"
+              value={hargaSekarang}
+              onChange={(e) => setHargaSekarang(e.target.value)}
+              placeholder="Contoh: 15000"
+              className="w-full p-2.5 rounded-xl border border-stone-300 font-medium"
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-stone-600 hover:bg-stone-100 font-bold"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-5 py-2 rounded-xl bg-brand-700 hover:bg-brand-800 text-white font-bold shadow-xs transition"
+            >
+              {loading ? 'Menyimpan...' : 'Simpan Komoditas'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
 export const StockView: React.FC<{
   overview: any;
   warehouses: Array<any>;
   onOpenSheet: (commodityId?: string) => void;
   onOpname: (commodity: any) => void;
-}> = ({ overview, warehouses, onOpenSheet, onOpname }) => {
+  onRefreshOverview?: () => void;
+}> = ({ overview, warehouses, onOpenSheet, onOpname, onRefreshOverview }) => {
   const [openId, setOpenId] = useState<string | null>(null);
+  const [openAddModal, setOpenAddModal] = useState<boolean>(false);
   const [detail, setDetail] = useState<any>(null);
   const [search, setSearch] = useState<string>('');
   const [selectedKelompok, setSelectedKelompok] = useState<string>('semua');
@@ -468,10 +640,18 @@ export const StockView: React.FC<{
             Buku Stok & Inventaris Lumbung Desa
           </h2>
           <p className="text-xs text-stone-600">
-            Pencatatan mutasi, pelacakan lot kedaluwarsa FEFO, dan audit fisik opname lumbung
+            Pencatatan mutasi, komoditas kustom desa, pelacakan lot kedaluwarsa FEFO, dan audit fisik opname lumbung
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setOpenAddModal(true)}
+            className="min-h-[44px] px-3.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold text-xs flex items-center gap-1.5 border border-stone-300 transition"
+          >
+            <Plus className="w-4 h-4 text-brand-700" />
+            + Komoditas Baru
+          </button>
           <button
             type="button"
             onClick={() => onOpenSheet()}
@@ -483,6 +663,12 @@ export const StockView: React.FC<{
         </div>
       </div>
 
+      <AddCommodityModal
+        open={openAddModal}
+        onClose={() => setOpenAddModal(false)}
+        onSuccess={() => onRefreshOverview?.()}
+      />
+
       {/* 2. Top Summary KPI Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
         <div className="p-3 rounded-2xl bg-white border border-stone-200 shadow-sm space-y-1">
@@ -490,7 +676,7 @@ export const StockView: React.FC<{
             <Package className="w-3.5 h-3.5 text-brand-700" /> Total Bahan
           </p>
           <p className="text-lg font-extrabold text-stone-900">{totalBahan} Komoditas</p>
-          <p className="text-[11px] text-stone-500">10 komoditas strategis desa</p>
+          <p className="text-[11px] text-stone-500">Komoditas aktif di lumbung</p>
         </div>
 
         <div className="p-3 rounded-2xl bg-white border border-stone-200 shadow-sm space-y-1">

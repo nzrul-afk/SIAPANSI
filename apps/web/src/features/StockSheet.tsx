@@ -37,6 +37,12 @@ export const StockTransactionSheet: React.FC<{
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
+  // Mode komoditas kustom
+  const [isCustom, setIsCustom] = useState<boolean>(false);
+  const [customNama, setCustomNama] = useState<string>('');
+  const [customSatuan, setCustomSatuan] = useState<string>('kg');
+  const [customKelompok, setCustomKelompok] = useState<string>('pokok');
+
   if (!open) return null;
 
   if (!commodities || commodities.length === 0) {
@@ -81,14 +87,23 @@ export const StockTransactionSheet: React.FC<{
       return;
     }
 
-    if (arah === 'keluar' && selectedComm && numVal > Number(selectedComm.stok_efektif)) {
+    if (isCustom && !customNama.trim()) {
+      setError('Nama komoditas kustom wajib diisi.');
+      return;
+    }
+
+    const finalCommId = isCustom ? '__custom__' : selectedComm.id;
+    const finalCommNama = isCustom ? customNama.trim() : selectedComm.nama;
+    const finalSatuan = isCustom ? (customSatuan.trim() || 'kg') : selectedComm.satuan;
+
+    if (!isCustom && arah === 'keluar' && selectedComm && numVal > Number(selectedComm.stok_efektif)) {
       setError(
         `Stok ${selectedComm.nama} tidak mencukupi (tersedia ${formatAngka(selectedComm.stok_efektif, 1)} ${selectedComm.satuan}). Stok tidak boleh negatif.`
       );
       return;
     }
 
-    if (isOver5x && !confirmLarge) {
+    if (isOver5x && !confirmLarge && !isCustom) {
       setConfirmLarge(true);
       return;
     }
@@ -96,9 +111,10 @@ export const StockTransactionSheet: React.FC<{
     setLoading(true);
     try {
       const res = await submitStockTransactionSmart({
-        commodity_id: selectedComm.id,
-        commodity_nama: selectedComm.nama,
-        satuan: selectedComm.satuan,
+        commodity_id: finalCommId,
+        commodity_nama: finalCommNama,
+        satuan: finalSatuan,
+        kelompok: isCustom ? customKelompok : undefined,
         warehouse_id: warehouseId,
         jenis,
         jumlah: numVal,
@@ -108,10 +124,10 @@ export const StockTransactionSheet: React.FC<{
 
       onSuccess({
         txId: res.txId,
-        commodityId: selectedComm.id,
+        commodityId: finalCommId,
         jumlah: numVal,
         arah,
-        nama: selectedComm.nama,
+        nama: finalCommNama,
       });
       onClose();
     } catch (err: any) {
@@ -189,27 +205,84 @@ export const StockTransactionSheet: React.FC<{
 
           {/* 3. Pilih Komoditas */}
           <div>
-            <label className="block text-xs font-bold text-stone-700 mb-1">Komoditas Pangan</label>
-            <select
-              value={commodityId}
-              onChange={(e) => {
-                setCommodityId(e.target.value);
-                setConfirmLarge(false);
-              }}
-              className="w-full min-h-[48px] px-3 rounded-xl border border-stone-300 bg-white text-base font-medium"
-            >
-              {commodities.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.nama} (Stok: {formatAngka(c.stok_efektif, 0)} {c.satuan} · {formatAngka(c.hari_bertahan, 1)} hari)
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-stone-700">Komoditas Pangan</label>
+              <button
+                type="button"
+                onClick={() => setIsCustom(!isCustom)}
+                className="text-xs font-bold text-brand-700 hover:underline"
+              >
+                {isCustom ? '← Pilih dari Daftar' : '+ Ketik Komoditas Baru'}
+              </button>
+            </div>
+
+            {isCustom ? (
+              <div className="space-y-2.5 p-3 rounded-xl border border-brand-200 bg-brand-50/50">
+                <div>
+                  <label className="block text-[11px] font-bold text-stone-700 mb-1">
+                    Nama Komoditas Bebas <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={customNama}
+                    onChange={(e) => setCustomNama(e.target.value)}
+                    placeholder="Contoh: Ubi Madu, Ikan Lele, Jagung Manis, Gula Aren..."
+                    className="w-full min-h-[44px] px-3 rounded-xl border border-stone-300 bg-white text-sm font-semibold focus:ring-2 focus:ring-brand-500"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-[11px] font-bold text-stone-700 mb-1">Satuan</label>
+                    <input
+                      type="text"
+                      value={customSatuan}
+                      onChange={(e) => setCustomSatuan(e.target.value)}
+                      placeholder="kg, liter, ikat..."
+                      className="w-full min-h-[40px] px-3 rounded-xl border border-stone-300 bg-white text-xs font-medium"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-stone-700 mb-1">Kelompok</label>
+                    <select
+                      value={customKelompok}
+                      onChange={(e) => setCustomKelompok(e.target.value)}
+                      className="w-full min-h-[40px] px-2 rounded-xl border border-stone-300 bg-white text-xs font-medium"
+                    >
+                      <option value="pokok">Pokok (Karbohidrat)</option>
+                      <option value="protein">Protein</option>
+                      <option value="pelengkap">Pelengkap</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <select
+                value={commodityId}
+                onChange={(e) => {
+                  if (e.target.value === '__custom__') {
+                    setIsCustom(true);
+                  } else {
+                    setCommodityId(e.target.value);
+                    setConfirmLarge(false);
+                  }
+                }}
+                className="w-full min-h-[48px] px-3 rounded-xl border border-stone-300 bg-white text-base font-medium"
+              >
+                {commodities.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nama} (Stok: {formatAngka(c.stok_efektif, 0)} {c.satuan} · {formatAngka(c.hari_bertahan, 1)} hari)
+                  </option>
+                ))}
+                <option value="__custom__">+ Ketik Komoditas Lainnya...</option>
+              </select>
+            )}
           </div>
 
           {/* 4. Jumlah dengan Stepper Besar */}
           <div>
             <label className="block text-xs font-bold text-stone-700 mb-1">
-              Jumlah ({selectedComm?.satuan || 'kg'})
+              Jumlah ({isCustom ? (customSatuan || 'kg') : (selectedComm?.satuan || 'kg')})
             </label>
             <div className="flex items-center gap-2">
               <button

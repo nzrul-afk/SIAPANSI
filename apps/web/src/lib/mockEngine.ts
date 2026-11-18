@@ -617,6 +617,57 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
     };
   }
 
+  // Tambah Komoditas Kustom (POST /stock/commodity atau /commodities)
+  if ((cleanPath === '/stock/commodity' || cleanPath === '/commodities') && method === 'POST') {
+    const rawNama = (body.nama || '').trim();
+    if (!rawNama) {
+      throw new Error('Nama komoditas wajib diisi.');
+    }
+    const kode = rawNama.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || `k_${Date.now()}`;
+    const id = `c-${kode}`;
+
+    let existing = stateOverview.komoditas.find((c: any) => c.id === id || c.kode === kode || c.nama.toLowerCase() === rawNama.toLowerCase());
+    if (existing) {
+      return { status: 'sukses', pesan: `Komoditas ${existing.nama} sudah terdaftar.`, commodity: existing };
+    }
+
+    const satuan = (body.satuan || 'kg').trim();
+    const kelompok = (body.kelompok || 'pokok').toLowerCase();
+    const stokAwal = Number(body.stok_awal) || 0;
+    const kebHarian = Math.max(0.1, Number(body.kebutuhan_harian) || (kelompok === 'pokok' ? 45.0 : kelompok === 'protein' ? 25.0 : 15.0));
+    const hargaSekarang = Number(body.harga_sekarang) || 12000;
+    const hariBertahan = +(stokAwal / kebHarian).toFixed(1);
+
+    const newComm = {
+      id,
+      kode,
+      nama: rawNama,
+      satuan,
+      kelompok,
+      kebutuhan_harian: kebHarian,
+      norma_per_kapita_hari: +(kebHarian / 1800).toFixed(4),
+      stok_efektif: stokAwal,
+      hari_bertahan: hariBertahan,
+      status: hariBertahan >= 21 ? 'Aman' : hariBertahan >= 14 ? 'Waspada' : hariBertahan >= 7 ? 'Siaga' : 'Kritis',
+      level: hariBertahan >= 21 ? 'aman' : hariBertahan >= 14 ? 'waspada' : hariBertahan >= 7 ? 'siaga' : 'kritis',
+      bawah_72_jam: hariBertahan < 3.0,
+      progress_target_pct: Math.min(100, Math.round((hariBertahan / (stateOverview.target_hari || 30)) * 100)),
+      harga_sekarang: hargaSekarang,
+      perubahan_harga_7d_pct: 0.0,
+      eksposur_impor: 0.0,
+      rincian_sumber: { Lumbung: stokAwal, Poktan: 0, 'Rumah Tangga': 0, Pedagang: 0 },
+    };
+
+    stateOverview.komoditas.push(newComm);
+    recalculateOverviewSummary();
+
+    return {
+      status: 'sukses',
+      pesan: `Komoditas ${newComm.nama} berhasil ditambahkan ke inventaris lumbung.`,
+      commodity: newComm,
+    };
+  }
+
   // Commodity stock detail (e.g. /stock/c-beras)
   const stockDetailMatch = cleanPath.match(/^\/stock\/([^/]+)$/);
   if (stockDetailMatch && method === 'GET') {
@@ -682,13 +733,44 @@ export async function handleClientMockRoute(path: string, options: RequestInit =
   // Stock Transactions
   if (cleanPath.startsWith('/stock/transactions')) {
     const applySingleTx = (tx: any) => {
-      if (!tx.commodity_id || !tx.jumlah) return;
-      const comm = stateOverview.komoditas.find((c: any) => c.id === tx.commodity_id || c.kode === tx.commodity_id);
+      if ((!tx.commodity_id && !tx.commodity_nama) || !tx.jumlah) return;
+      let comm = stateOverview.komoditas.find((c: any) => c.id === tx.commodity_id || c.kode === tx.commodity_id);
+
+      // Jika komoditas kustom belum terdaftar, daftarkan otomatis
+      if (!comm && tx.commodity_nama) {
+        const rawNama = tx.commodity_nama.trim();
+        const kode = rawNama.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || `k_${Date.now()}`;
+        const id = tx.commodity_id && tx.commodity_id !== '__custom__' ? tx.commodity_id : `c-${kode}`;
+        const satuan = tx.satuan || 'kg';
+        const kelompok = tx.kelompok || 'pokok';
+        const kebHarian = Number(tx.kebutuhan_harian) || (kelompok === 'pokok' ? 45.0 : kelompok === 'protein' ? 25.0 : 15.0);
+        const hargaSekarang = Number(tx.harga_sekarang) || 12000;
+
+        comm = {
+          id,
+          kode,
+          nama: rawNama,
+          satuan,
+          kelompok,
+          kebutuhan_harian: kebHarian,
+          norma_per_kapita_hari: +(kebHarian / 1800).toFixed(4),
+          stok_efektif: 0,
+          hari_bertahan: 0,
+          status: 'Kritis',
+          level: 'kritis',
+          bawah_72_jam: true,
+          progress_target_pct: 0,
+          harga_sekarang: hargaSekarang,
+          perubahan_harga_7d_pct: 0.0,
+          eksposur_impor: 0.0,
+          rincian_sumber: { Lumbung: 0, Poktan: 0, 'Rumah Tangga': 0, Pedagang: 0 },
+        };
+        stateOverview.komoditas.push(comm);
+      }
+
       if (!comm) return;
       const qty = Number(tx.jumlah) || 0;
       if (tx.jenis === 'pembalik') {
-        // Pembalik: membatalkan transaksi sebelumnya
-        // Jika membatalkan 'masuk', maka kurangi stok; jika membatalkan 'keluar', maka tambah stok
         if (tx.reverses_arah === 'masuk') {
           comm.stok_efektif = Math.max(0, Math.round((comm.stok_efektif - qty) * 10) / 10);
         } else {

@@ -168,6 +168,7 @@ export async function submitStockTransactionSmart(txInput: {
   jumlah: number;
   tanggal: string;
   catatan: string;
+  kelompok?: string;
 }): Promise<{ offlineQueued: boolean; txId: string; response?: any }> {
   const txId = txInput.id || generateClientUUID();
   const nowIso = new Date().toISOString();
@@ -194,6 +195,9 @@ export async function submitStockTransactionSmart(txInput: {
       body: JSON.stringify({
         id: txId,
         commodity_id: txInput.commodity_id,
+        commodity_nama: txInput.commodity_nama,
+        satuan: txInput.satuan,
+        kelompok: txInput.kelompok,
         warehouse_id: txInput.warehouse_id,
         jenis: txInput.jenis,
         jumlah: txInput.jumlah,
